@@ -12,7 +12,8 @@ class ScheduleController extends Controller
     public function index()
     {
         $schedules = Schedule::with('location')->latest()->get();
-        return view('koordinator.schedules.index', compact('schedules'));
+        $locations = Location::where('is_active', true)->get();
+        return view('koordinator.schedules.index', compact('schedules', 'locations'));
     }
 
     public function create()
