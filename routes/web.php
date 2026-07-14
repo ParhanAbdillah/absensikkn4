@@ -26,6 +26,7 @@ Route::middleware(['auth', 'role:dpl'])->prefix('dpl')->name('dpl.')->group(func
 // Koordinator Routes
 Route::middleware(['auth', 'role:koordinator'])->prefix('koordinator')->name('koordinator.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Koordinator\DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/schedules/{schedule}/send-reminder', [\App\Http\Controllers\Koordinator\DashboardController::class, 'sendReminder'])->name('schedules.send-reminder');
     Route::resource('locations', \App\Http\Controllers\Koordinator\LocationController::class);
     Route::resource('schedules', \App\Http\Controllers\Koordinator\ScheduleController::class);
 });

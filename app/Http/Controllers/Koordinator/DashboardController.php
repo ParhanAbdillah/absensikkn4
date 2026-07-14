@@ -38,4 +38,26 @@ class DashboardController extends Controller
             'todayAttendances'
         ));
     }
+
+    public function sendReminder(Schedule $schedule)
+    {
+        $today = Carbon::today();
+        $members = User::where('role', 'anggota')->where('is_active', true)->get();
+        $sentCount = 0;
+
+        foreach ($members as $member) {
+            $hasAttended = Attendance::where('user_id', $member->id)
+                ->where('schedule_id', $schedule->id)
+                ->exists();
+
+            if (!$hasAttended && $member->phone) {
+                // Call artisan command logic inline or trigger command
+                \Illuminate\Support\Facades\Artisan::call('attendance:send-reminder');
+                $sentCount++;
+                break; // Break since the command handles all users, calling once is enough
+            }
+        }
+
+        return redirect()->back()->with('success', 'Pengingat WhatsApp berhasil dikirim ke anggota kelompok yang belum absen.');
+    }
 }
