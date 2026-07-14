@@ -15,6 +15,14 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @if(Auth::user()->isKoordinator())
+                        <x-nav-link :href="route('koordinator.locations.index')" :active="request()->routeIs('koordinator.locations.*')">
+                            {{ __('Kelola Lokasi') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('koordinator.schedules.index')" :active="request()->routeIs('koordinator.schedules.*')">
+                            {{ __('Kelola Jadwal') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 

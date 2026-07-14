@@ -19,23 +19,20 @@ Route::get('/dashboard', function () {
 
 // DPL Routes
 Route::middleware(['auth', 'role:dpl'])->prefix('dpl')->name('dpl.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dpl.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Dpl\DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/attendance/{attendance}/approve', [\App\Http\Controllers\Dpl\DashboardController::class, 'approve'])->name('attendance.approve');
 });
 
 // Koordinator Routes
 Route::middleware(['auth', 'role:koordinator'])->prefix('koordinator')->name('koordinator.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('koordinator.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Koordinator\DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('locations', \App\Http\Controllers\Koordinator\LocationController::class);
+    Route::resource('schedules', \App\Http\Controllers\Koordinator\ScheduleController::class);
 });
 
 // Anggota Routes
 Route::middleware(['auth', 'role:anggota'])->prefix('anggota')->name('anggota.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('anggota.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Anggota\DashboardController::class, 'index'])->name('dashboard');
 });
 
 Route::middleware('auth')->group(function () {
