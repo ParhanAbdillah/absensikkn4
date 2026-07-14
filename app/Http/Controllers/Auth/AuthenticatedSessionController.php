@@ -28,7 +28,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = Auth::user();
+        if ($user->isDpl()) {
+            return redirect()->route('dpl.dashboard');
+        } elseif ($user->isKoordinator()) {
+            return redirect()->route('koordinator.dashboard');
+        }
+
+        return redirect()->route('anggota.dashboard');
     }
 
     /**
