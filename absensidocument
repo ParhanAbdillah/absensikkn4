@@ -1,0 +1,833 @@
+# 📋 Rancangan Website Absensi KKN
+
+Dokumen rancangan lengkap untuk pembuatan website absensi KKN dengan fitur **Face Recognition** dan **Validasi Lokasi GPS** (radius 30 meter). Dibangun menggunakan **Laravel** dan **Alpine.js**.
+
+---
+
+## 1. Latar Belakang & Tujuan
+
+Proyek ini bertujuan membangun sistem absensi digital untuk kegiatan **Kuliah Kerja Nyata (KKN)** yang memastikan:
+- **Kehadiran valid** melalui pengenalan wajah (face recognition)
+- **Kehadiran di lokasi** melalui validasi koordinat GPS (maksimal 30 meter dari titik yang ditentukan)
+- **Manajemen peran** untuk membedakan hak akses setiap pengguna
+
+> [!IMPORTANT]
+> Sistem ini menggabungkan dua lapisan validasi: **wajah** dan **lokasi**, sehingga absensi tidak bisa dipalsukan oleh orang lain maupun dari lokasi yang jauh.
+
+---
+
+## 2. Tech Stack
+
+| Komponen | Teknologi | Keterangan |
+|---|---|---|
+| **Backend** | Laravel 11 | Framework PHP utama |
+| **Frontend** | Blade + Alpine.js | Templating & interaktivitas ringan |
+| **Face Recognition** | face-api.js | Library JS berbasis TensorFlow.js untuk deteksi & pengenalan wajah di sisi client |
+| **Geolocation** | HTML5 Geolocation API | Mendapatkan koordinat GPS pengguna |
+| **Database** | MySQL 8 | Database relasional (via Laragon) |
+| **Styling** | Tailwind CSS 3 | Utility-first CSS framework (sudah terintegrasi baik dengan Laravel) |
+| **Auth** | Laravel Breeze | Authentication scaffolding sederhana |
+| **File Storage** | Laravel Storage (local) | Menyimpan foto wajah referensi |
+
+---
+
+## 3. Pembagian Peran (Role-Based Access Control)
+
+### 3.1 Struktur Peran
+
+```mermaid
+graph TD
+    A["🛡️ Admin"] --> B["📋 Koordinator"]
+    A --> C["👨‍🏫 DPL"]
+    B --> D["👤 Anggota"]
+    C --> D
+    
+    style A fill:#ef4444,stroke:#dc2626,color:#fff
+    style B fill:#f59e0b,stroke:#d97706,color:#fff
+    style C fill:#3b82f6,stroke:#2563eb,color:#fff
+    style D fill:#10b981,stroke:#059669,color:#fff
+```
+
+### 3.2 Detail Peran & Hak Akses
+
+| Fitur / Akses | 🛡️ Admin | 👨‍🏫 DPL | 📋 Koordinator | 👤 Anggota |
+|---|:---:|:---:|:---:|:---:|
+| Kelola semua pengguna (CRUD) | ✅ | ❌ | ❌ | ❌ |
+| Kelola lokasi absensi | ✅ | ❌ | ✅ | ❌ |
+| Buat jadwal kegiatan | ✅ | ❌ | ✅ | ❌ |
+| Lihat semua laporan absensi | ✅ | ✅ | ✅ | ❌ |
+| Export laporan (PDF/Excel) | ✅ | ✅ | ✅ | ❌ |
+| Approve/reject absensi manual | ✅ | ✅ | ❌ | ❌ |
+| Melakukan absensi (face + GPS) | ❌ | ❌ | ✅ | ✅ |
+| Registrasi wajah sendiri | ❌ | ❌ | ✅ | ✅ |
+| Lihat riwayat absensi sendiri | ✅ | ✅ | ✅ | ✅ |
+| Dashboard statistik | ✅ | ✅ | ✅ | ✅ (terbatas) |
+| Kelola kelompok KKN | ✅ | ❌ | ❌ | ❌ |
+| Atur radius & koordinat | ✅ | ❌ | ✅ | ❌ |
+
+### 3.3 Penjelasan Peran
+
+1. **🛡️ Admin**
+   - Superuser yang mengelola seluruh sistem
+   - Mengelola pengguna, kelompok KKN, lokasi, dan jadwal
+   - Melihat semua laporan dan statistik
+   - Biasanya: admin kampus / panitia KKN
+
+2. **👨‍🏫 DPL (Dosen Pembimbing Lapangan)**
+   - Mengawasi dan memantau kehadiran kelompok bimbingannya
+   - Melihat laporan dan statistik kelompok
+   - Bisa approve/reject absensi manual (jika ada kendala teknis)
+   - Tidak bisa mengubah konfigurasi sistem
+
+3. **📋 Koordinator (Ketua Kelompok)**
+   - Mengelola jadwal kegiatan kelompoknya
+   - Mengelola lokasi absensi untuk kelompoknya
+   - Melihat laporan absensi anggota kelompok
+   - Bisa melakukan absensi seperti anggota biasa
+
+4. **👤 Anggota**
+   - Melakukan absensi melalui face recognition + GPS
+   - Melihat riwayat absensi pribadi
+   - Registrasi wajah untuk pertama kali
+
+---
+
+## 4. Arsitektur Sistem
+
+### 4.1 Arsitektur Umum
+
+```mermaid
+flowchart TB
+    subgraph CLIENT["🖥️ Client (Browser)"]
+        ALPINE["Alpine.js Components"]
+        FACEAPI["face-api.js"]
+        GEOLOC["Geolocation API"]
+        CAMERA["Camera/Webcam"]
+    end
+    
+    subgraph SERVER["🖧 Server (Laravel)"]
+        ROUTES["Routes & Middleware"]
+        CONTROLLERS["Controllers"]
+        MODELS["Eloquent Models"]
+        SERVICES["Service Layer"]
+        POLICIES["Policies & Gates"]
+    end
+    
+    subgraph DB["🗄️ Database (MySQL)"]
+        TABLES["Tables"]
+    end
+    
+    subgraph STORAGE["📁 Storage"]
+        FACES["Face Descriptors (JSON)"]
+        PHOTOS["Attendance Photos"]
+    end
+    
+    CAMERA --> FACEAPI
+    FACEAPI --> ALPINE
+    GEOLOC --> ALPINE
+    ALPINE -->|"HTTP/AJAX"| ROUTES
+    ROUTES --> CONTROLLERS
+    CONTROLLERS --> SERVICES
+    SERVICES --> MODELS
+    MODELS --> TABLES
+    CONTROLLERS --> POLICIES
+    SERVICES --> FACES
+    SERVICES --> PHOTOS
+```
+
+### 4.2 Alur Proses Absensi
+
+```mermaid
+sequenceDiagram
+    actor User as 👤 Anggota
+    participant Browser as 🌐 Browser
+    participant FaceAPI as 🤖 face-api.js
+    participant GeoAPI as 📍 Geolocation API
+    participant Server as 🖧 Laravel Server
+    participant DB as 🗄️ Database
+
+    User->>Browser: Buka halaman absensi
+    Browser->>GeoAPI: Minta izin lokasi
+    GeoAPI-->>Browser: Koordinat (lat, lng)
+    
+    Browser->>Server: Kirim koordinat untuk validasi
+    Server->>DB: Ambil lokasi absensi terdekat
+    
+    alt Jarak > 30 meter
+        Server-->>Browser: ❌ Ditolak - Di luar radius
+        Browser-->>User: Tampilkan pesan error + peta
+    else Jarak ≤ 30 meter
+        Server-->>Browser: ✅ Lokasi valid
+        Browser->>Browser: Aktifkan kamera
+        Browser->>FaceAPI: Load model face detection
+        FaceAPI->>FaceAPI: Deteksi wajah dari kamera
+        
+        alt Wajah tidak terdeteksi
+            FaceAPI-->>Browser: ❌ Wajah tidak ditemukan
+            Browser-->>User: Tampilkan pesan error
+        else Wajah terdeteksi
+            FaceAPI->>FaceAPI: Generate face descriptor (128-dim vector)
+            Browser->>Server: Kirim face descriptor + foto + koordinat
+            Server->>DB: Ambil face descriptor tersimpan milik user
+            Server->>Server: Hitung Euclidean Distance
+            
+            alt Distance > threshold (0.6)
+                Server-->>Browser: ❌ Wajah tidak cocok
+                Browser-->>User: Tampilkan pesan error
+            else Distance ≤ threshold (0.6)
+                Server->>DB: Simpan record absensi
+                Server-->>Browser: ✅ Absensi berhasil
+                Browser-->>User: Tampilkan konfirmasi sukses
+            end
+        end
+    end
+```
+
+---
+
+## 5. Database Schema
+
+### 5.1 Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ ATTENDANCES : "melakukan"
+    USERS ||--o{ FACE_DATA : "memiliki"
+    USERS }o--|| GROUPS : "anggota"
+    GROUPS }o--|| USERS : "DPL"
+    LOCATIONS ||--o{ SCHEDULES : "digunakan"
+    LOCATIONS }o--|| GROUPS : "milik"
+    SCHEDULES ||--o{ ATTENDANCES : "untuk"
+    GROUPS ||--o{ SCHEDULES : "memiliki"
+
+    USERS {
+        bigint id PK
+        string name
+        string email UK
+        string password
+        enum role "admin|dpl|koordinator|anggota"
+        bigint group_id FK
+        string nim_nip
+        string phone
+        string avatar
+        boolean is_active
+        timestamps created_at
+    }
+
+    GROUPS {
+        bigint id PK
+        string name
+        string description
+        string village "Desa/Kelurahan"
+        string district "Kecamatan"
+        bigint dpl_id FK
+        bigint koordinator_id FK
+        boolean is_active
+        timestamps created_at
+    }
+
+    LOCATIONS {
+        bigint id PK
+        string name
+        string address
+        decimal latitude "10,8"
+        decimal longitude "11,8"
+        integer radius_meters "default: 30"
+        bigint group_id FK
+        boolean is_active
+        timestamps created_at
+    }
+
+    SCHEDULES {
+        bigint id PK
+        string title
+        text description
+        bigint group_id FK
+        bigint location_id FK
+        date activity_date
+        time start_time
+        time end_time
+        enum type "rutin|insidental"
+        boolean is_active
+        timestamps created_at
+    }
+
+    FACE_DATA {
+        bigint id PK
+        bigint user_id FK
+        json descriptor "128-dim float array"
+        string reference_photo "path foto referensi"
+        boolean is_primary
+        timestamps created_at
+    }
+
+    ATTENDANCES {
+        bigint id PK
+        bigint user_id FK
+        bigint schedule_id FK
+        bigint location_id FK
+        timestamp check_in_at
+        timestamp check_out_at
+        decimal check_in_lat "10,8"
+        decimal check_in_lng "11,8"
+        decimal check_out_lat "10,8"
+        decimal check_out_lng "11,8"
+        float face_match_score
+        string photo_path "foto saat absen"
+        float distance_meters
+        enum status "hadir|izin|sakit|alpha|terlambat"
+        text notes
+        bigint approved_by FK "nullable"
+        timestamps created_at
+    }
+```
+
+### 5.2 Detail Tabel
+
+#### `users`
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | BIGINT (PK) | Auto increment |
+| name | VARCHAR(255) | Nama lengkap |
+| email | VARCHAR(255) UK | Email untuk login |
+| password | VARCHAR(255) | Password ter-hash |
+| role | ENUM | `admin`, `dpl`, `koordinator`, `anggota` |
+| group_id | BIGINT FK | Kelompok KKN |
+| nim_nip | VARCHAR(50) | NIM mahasiswa / NIP dosen |
+| phone | VARCHAR(20) | Nomor telepon |
+| avatar | VARCHAR(255) | Path foto profil |
+| is_active | BOOLEAN | Status aktif |
+
+#### `groups`
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | BIGINT (PK) | Auto increment |
+| name | VARCHAR(255) | Nama kelompok (misal: "Kelompok 5") |
+| description | TEXT | Deskripsi kelompok |
+| village | VARCHAR(255) | Desa/Kelurahan penempatan |
+| district | VARCHAR(255) | Kecamatan |
+| dpl_id | BIGINT FK | ID DPL yang membimbing |
+| koordinator_id | BIGINT FK | ID ketua kelompok |
+| is_active | BOOLEAN | Status aktif |
+
+#### `locations`
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | BIGINT (PK) | Auto increment |
+| name | VARCHAR(255) | Nama lokasi (misal: "Balai Desa") |
+| address | TEXT | Alamat lengkap |
+| latitude | DECIMAL(10,8) | Koordinat lintang |
+| longitude | DECIMAL(11,8) | Koordinat bujur |
+| radius_meters | INT | Radius valid dalam meter (default: 30) |
+| group_id | BIGINT FK | Kelompok pemilik lokasi |
+| is_active | BOOLEAN | Status aktif |
+
+#### `attendances`
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | BIGINT (PK) | Auto increment |
+| user_id | BIGINT FK | Pengguna yang absen |
+| schedule_id | BIGINT FK | Jadwal kegiatan |
+| location_id | BIGINT FK | Lokasi absensi |
+| check_in_at | TIMESTAMP | Waktu check-in |
+| check_out_at | TIMESTAMP | Waktu check-out (nullable) |
+| check_in_lat | DECIMAL(10,8) | Latitude saat check-in |
+| check_in_lng | DECIMAL(11,8) | Longitude saat check-in |
+| face_match_score | FLOAT | Skor kecocokan wajah (0-1) |
+| photo_path | VARCHAR(255) | Path foto saat absen |
+| distance_meters | FLOAT | Jarak dari titik lokasi (meter) |
+| status | ENUM | `hadir`, `izin`, `sakit`, `alpha`, `terlambat` |
+| notes | TEXT | Catatan tambahan |
+| approved_by | BIGINT FK | Diapprove oleh (nullable) |
+
+---
+
+## 6. Struktur Folder Laravel
+
+```
+absensi/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Auth/              # Login, Register, dll
+│   │   │   ├── Admin/
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   ├── UserController.php
+│   │   │   │   ├── GroupController.php
+│   │   │   │   ├── LocationController.php
+│   │   │   │   └── ReportController.php
+│   │   │   ├── Dpl/
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   └── ReportController.php
+│   │   │   ├── Koordinator/
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   ├── ScheduleController.php
+│   │   │   │   ├── LocationController.php
+│   │   │   │   └── AttendanceController.php
+│   │   │   └── Anggota/
+│   │   │       ├── DashboardController.php
+│   │   │       ├── AttendanceController.php
+│   │   │       └── FaceRegistrationController.php
+│   │   ├── Middleware/
+│   │   │   ├── RoleMiddleware.php        # Cek role user
+│   │   │   └── EnsureFaceRegistered.php  # Pastikan wajah sudah terdaftar
+│   │   └── Requests/
+│   │       ├── StoreAttendanceRequest.php
+│   │       ├── StoreLocationRequest.php
+│   │       ├── StoreScheduleRequest.php
+│   │       └── StoreFaceDataRequest.php
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── Group.php
+│   │   ├── Location.php
+│   │   ├── Schedule.php
+│   │   ├── FaceData.php
+│   │   └── Attendance.php
+│   ├── Policies/
+│   │   ├── AttendancePolicy.php
+│   │   ├── GroupPolicy.php
+│   │   ├── LocationPolicy.php
+│   │   └── SchedulePolicy.php
+│   └── Services/
+│       ├── AttendanceService.php     # Logika bisnis absensi
+│       ├── FaceRecognitionService.php # Validasi face descriptor
+│       ├── GeolocationService.php    # Hitung jarak Haversine
+│       └── ReportService.php         # Generate laporan
+├── database/
+│   ├── migrations/
+│   │   ├── 0001_create_groups_table.php
+│   │   ├── 0002_add_fields_to_users_table.php
+│   │   ├── 0003_create_locations_table.php
+│   │   ├── 0004_create_schedules_table.php
+│   │   ├── 0005_create_face_data_table.php
+│   │   └── 0006_create_attendances_table.php
+│   └── seeders/
+│       ├── RoleSeeder.php
+│       ├── AdminSeeder.php
+│       └── DemoDataSeeder.php
+├── resources/
+│   ├── views/
+│   │   ├── layouts/
+│   │   │   ├── app.blade.php         # Layout utama
+│   │   │   ├── admin.blade.php       # Layout admin
+│   │   │   └── guest.blade.php       # Layout tamu (login)
+│   │   ├── components/
+│   │   │   ├── sidebar.blade.php
+│   │   │   ├── navbar.blade.php
+│   │   │   ├── map-picker.blade.php  # Komponen peta
+│   │   │   ├── face-camera.blade.php # Komponen kamera
+│   │   │   └── stats-card.blade.php
+│   │   ├── admin/
+│   │   │   ├── dashboard.blade.php
+│   │   │   ├── users/
+│   │   │   ├── groups/
+│   │   │   ├── locations/
+│   │   │   └── reports/
+│   │   ├── dpl/
+│   │   │   ├── dashboard.blade.php
+│   │   │   └── reports/
+│   │   ├── koordinator/
+│   │   │   ├── dashboard.blade.php
+│   │   │   ├── schedules/
+│   │   │   ├── locations/
+│   │   │   └── attendance/
+│   │   ├── anggota/
+│   │   │   ├── dashboard.blade.php
+│   │   │   ├── attendance/
+│   │   │   │   ├── index.blade.php    # Halaman absen
+│   │   │   │   └── history.blade.php  # Riwayat absen
+│   │   │   └── face/
+│   │   │       └── register.blade.php # Registrasi wajah
+│   │   └── auth/
+│   │       ├── login.blade.php
+│   │       └── register.blade.php
+│   ├── js/
+│   │   ├── app.js
+│   │   ├── face-recognition.js    # Logic face-api.js
+│   │   ├── geolocation.js         # Logic GPS
+│   │   └── alpine/
+│   │       ├── attendance.js      # Alpine component absensi
+│   │       ├── face-register.js   # Alpine component registrasi wajah
+│   │       └── map-picker.js      # Alpine component peta
+│   └── css/
+│       └── app.css
+├── public/
+│   └── models/                    # Model face-api.js (pre-trained)
+│       ├── face_landmark_68_model-weights_manifest.json
+│       ├── face_recognition_model-weights_manifest.json
+│       ├── ssd_mobilenetv1_model-weights_manifest.json
+│       └── tiny_face_detector_model-weights_manifest.json
+├── routes/
+│   └── web.php
+└── storage/
+    └── app/
+        ├── faces/                 # Foto referensi wajah
+        └── attendances/           # Foto saat absen
+```
+
+---
+
+## 7. Fitur Detail
+
+### 7.1 🔐 Autentikasi & Manajemen User
+
+- Login dengan email & password
+- Registrasi oleh Admin (anggota tidak bisa self-register)
+- Reset password
+- Profile management
+- Redirect otomatis berdasarkan role setelah login
+
+### 7.2 📸 Registrasi Wajah (Face Registration)
+
+**Alur:**
+1. User membuka halaman registrasi wajah
+2. Kamera aktif, face-api.js mendeteksi wajah secara real-time
+3. User diminta mengambil **3 foto** dari sudut berbeda (depan, kiri sedikit, kanan sedikit)
+4. Setiap foto menghasilkan **face descriptor** (array 128 dimensi)
+5. Descriptor disimpan ke tabel `face_data`
+6. User dikonfirmasi sudah terdaftar
+
+**Validasi:**
+- Hanya 1 wajah yang boleh terdeteksi dalam frame
+- Kualitas foto harus memadai (pencahayaan cukup)
+- Minimal 3 descriptor untuk akurasi yang baik
+
+### 7.3 📍 Validasi Lokasi GPS
+
+**Alur:**
+1. Saat user membuka halaman absensi, browser meminta izin lokasi
+2. Koordinat user dikirim ke server
+3. Server menghitung jarak menggunakan **Haversine Formula**:
+
+```php
+// GeolocationService.php
+public function calculateDistance($lat1, $lng1, $lat2, $lng2): float
+{
+    $earthRadius = 6371000; // meter
+    
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLng = deg2rad($lng2 - $lng1);
+    
+    $a = sin($dLat / 2) * sin($dLat / 2) +
+         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+         sin($dLng / 2) * sin($dLng / 2);
+    
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+    
+    return $earthRadius * $c; // dalam meter
+}
+```
+
+4. Jika jarak ≤ 30 meter → ✅ Lanjut ke face recognition
+5. Jika jarak > 30 meter → ❌ Tampilkan peta dengan posisi user & titik lokasi
+
+### 7.4 🤖 Face Recognition saat Absensi
+
+**Alur:**
+1. Setelah lokasi valid, kamera diaktifkan
+2. face-api.js mendeteksi & menghasilkan descriptor wajah
+3. Descriptor dikirim ke server bersama foto
+4. Server membandingkan dengan descriptor tersimpan:
+
+```php
+// FaceRecognitionService.php
+public function matchFace(array $inputDescriptor, array $storedDescriptors): float
+{
+    $minDistance = PHP_FLOAT_MAX;
+    
+    foreach ($storedDescriptors as $stored) {
+        $distance = $this->euclideanDistance($inputDescriptor, $stored);
+        $minDistance = min($minDistance, $distance);
+    }
+    
+    return $minDistance; // < 0.6 = match
+}
+
+private function euclideanDistance(array $a, array $b): float
+{
+    $sum = 0;
+    for ($i = 0; $i < count($a); $i++) {
+        $sum += pow($a[$i] - $b[$i], 2);
+    }
+    return sqrt($sum);
+}
+```
+
+5. Jika distance < 0.6 → ✅ Wajah cocok, absensi dicatat
+6. Jika distance ≥ 0.6 → ❌ Wajah tidak cocok
+
+### 7.5 📊 Dashboard per Role
+
+**Admin Dashboard:**
+- Total kelompok KKN aktif
+- Total pengguna per role
+- Statistik kehadiran seluruh kelompok (grafik)
+- Kegiatan hari ini
+- User yang belum registrasi wajah
+
+**DPL Dashboard:**
+- Kelompok bimbingan
+- Statistik kehadiran kelompok bimbingan
+- Anggota yang sering absent/terlambat
+- Jadwal kegiatan mendatang
+
+**Koordinator Dashboard:**
+- Statistik kehadiran kelompok
+- Jadwal hari ini & mendatang
+- Quick action: buat jadwal, kelola lokasi
+- Anggota yang belum absen hari ini
+
+**Anggota Dashboard:**
+- Status absensi hari ini
+- Riwayat absensi (7 hari terakhir)
+- Jadwal kegiatan mendatang
+- Persentase kehadiran pribadi
+- Quick action: absen sekarang
+
+### 7.6 📄 Laporan & Export
+
+- Laporan kehadiran harian/mingguan/bulanan
+- Export ke **PDF** (menggunakan DomPDF/Snappy)
+- Export ke **Excel** (menggunakan Laravel Excel / Maatwebsite)
+- Filter berdasarkan kelompok, tanggal, status
+- Rekapitulasi per anggota
+
+---
+
+## 8. Routing Structure
+
+```php
+// routes/web.php
+
+// === Auth Routes ===
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'login']);
+});
+
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// === Redirect setelah login ===
+Route::get('/dashboard', [DashboardRedirectController::class, 'redirect'])
+    ->middleware('auth')
+    ->name('dashboard');
+
+// === Admin Routes ===
+Route::prefix('admin')
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/dashboard', [Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::resource('users', Admin\UserController::class);
+        Route::resource('groups', Admin\GroupController::class);
+        Route::resource('locations', Admin\LocationController::class);
+        Route::get('/reports', [Admin\ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export', [Admin\ReportController::class, 'export'])->name('reports.export');
+    });
+
+// === DPL Routes ===
+Route::prefix('dpl')
+    ->middleware(['auth', 'role:dpl'])
+    ->name('dpl.')
+    ->group(function () {
+        Route::get('/dashboard', [Dpl\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/reports', [Dpl\ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export', [Dpl\ReportController::class, 'export'])->name('reports.export');
+        Route::post('/attendance/{attendance}/approve', [Dpl\AttendanceController::class, 'approve'])->name('attendance.approve');
+    });
+
+// === Koordinator Routes ===
+Route::prefix('koordinator')
+    ->middleware(['auth', 'role:koordinator'])
+    ->name('koordinator.')
+    ->group(function () {
+        Route::get('/dashboard', [Koordinator\DashboardController::class, 'index'])->name('dashboard');
+        Route::resource('schedules', Koordinator\ScheduleController::class);
+        Route::resource('locations', Koordinator\LocationController::class);
+        Route::get('/attendance', [Koordinator\AttendanceController::class, 'index'])->name('attendance.index');
+        Route::get('/reports', [Koordinator\ReportController::class, 'index'])->name('reports.index');
+    });
+
+// === Anggota Routes (juga dipakai Koordinator) ===
+Route::prefix('absensi')
+    ->middleware(['auth', 'role:anggota,koordinator', 'face.registered'])
+    ->name('attendance.')
+    ->group(function () {
+        Route::get('/', [Anggota\AttendanceController::class, 'index'])->name('index');
+        Route::post('/check-location', [Anggota\AttendanceController::class, 'checkLocation'])->name('check-location');
+        Route::post('/store', [Anggota\AttendanceController::class, 'store'])->name('store');
+        Route::get('/history', [Anggota\AttendanceController::class, 'history'])->name('history');
+    });
+
+// === Face Registration ===
+Route::prefix('face')
+    ->middleware(['auth', 'role:anggota,koordinator'])
+    ->name('face.')
+    ->group(function () {
+        Route::get('/register', [Anggota\FaceRegistrationController::class, 'index'])->name('register');
+        Route::post('/register', [Anggota\FaceRegistrationController::class, 'store'])->name('store');
+        Route::delete('/register/{faceData}', [Anggota\FaceRegistrationController::class, 'destroy'])->name('destroy');
+    });
+
+// === API-like routes (AJAX dari Alpine.js) ===
+Route::prefix('api')
+    ->middleware(['auth'])
+    ->group(function () {
+        Route::get('/user/face-descriptors', [Api\FaceController::class, 'getDescriptors']);
+        Route::get('/locations/nearby', [Api\LocationController::class, 'nearby']);
+        Route::get('/schedules/today', [Api\ScheduleController::class, 'today']);
+    });
+```
+
+---
+
+## 9. Komponen Alpine.js Utama
+
+### 9.1 Komponen Absensi
+
+```javascript
+// resources/js/alpine/attendance.js
+export default () => ({
+    // State
+    step: 'location',  // 'location' | 'face' | 'success' | 'error'
+    loading: false,
+    errorMessage: '',
+    
+    // Location
+    userLat: null,
+    userLng: null,
+    locationValid: false,
+    distanceMeters: null,
+    nearestLocation: null,
+    
+    // Face
+    cameraActive: false,
+    faceDetected: false,
+    faceDescriptor: null,
+    capturedPhoto: null,
+    matchScore: null,
+    
+    // Methods
+    async checkLocation() { /* ... */ },
+    async startCamera() { /* ... */ },
+    async detectFace() { /* ... */ },
+    async submitAttendance() { /* ... */ },
+    
+    // Computed
+    get canSubmit() {
+        return this.locationValid && this.faceDetected && this.faceDescriptor;
+    }
+})
+```
+
+### 9.2 Komponen Map Picker (untuk Admin/Koordinator)
+
+```javascript
+// resources/js/alpine/map-picker.js
+export default () => ({
+    lat: null,
+    lng: null,
+    radius: 30,
+    map: null,
+    marker: null,
+    circle: null,
+    
+    init() { /* Initialize Leaflet map */ },
+    setLocation(lat, lng) { /* ... */ },
+    updateRadius(meters) { /* ... */ },
+    getCurrentLocation() { /* ... */ },
+})
+```
+
+---
+
+## 10. Keamanan
+
+| Aspek | Implementasi |
+|---|---|
+| **Authentication** | Laravel Breeze + session-based auth |
+| **Authorization** | Role middleware + Laravel Policies |
+| **CSRF** | Token CSRF di setiap form |
+| **Face Data** | Descriptor disimpan di server, bukan di client |
+| **GPS Spoofing** | Validasi server-side + timestamp check |
+| **Rate Limiting** | Throttle absensi (max 1x per jadwal) |
+| **File Upload** | Validasi tipe & ukuran foto |
+| **XSS** | Blade auto-escaping |
+| **SQL Injection** | Eloquent ORM parameterized queries |
+
+> [!WARNING]
+> **Anti-spoofing GPS**: Meskipun GPS bisa di-spoof di perangkat rooted/jailbroken, kombinasi dengan face recognition memberikan lapisan keamanan tambahan. Untuk keamanan ekstra, bisa ditambahkan pengecekan apakah mock location diaktifkan (khusus Android via User-Agent detection).
+
+---
+
+## 11. Packages Laravel yang Dibutuhkan
+
+| Package | Kegunaan |
+|---|---|
+| `laravel/breeze` | Authentication scaffolding |
+| `maatwebsite/excel` | Export laporan ke Excel |
+| `barryvdh/laravel-dompdf` | Export laporan ke PDF |
+| `spatie/laravel-permission` | (Opsional) Role & permission management |
+| `intervention/image` | Manipulasi foto (resize, compress) |
+
+**NPM Packages:**
+| Package | Kegunaan |
+|---|---|
+| `face-api.js` | Face detection & recognition |
+| `alpinejs` | Reactive UI components |
+| `leaflet` | Peta interaktif |
+| `tailwindcss` | CSS framework |
+| `@tailwindcss/forms` | Styling form elements |
+| `chart.js` | Grafik dashboard |
+
+---
+
+## 12. Timeline Pengerjaan (Estimasi)
+
+| Fase | Durasi | Detail |
+|---|---|---|
+| **Fase 1: Setup & Auth** | 2-3 hari | Install Laravel, setup database, auth, role middleware |
+| **Fase 2: CRUD Dasar** | 3-4 hari | Users, Groups, Locations, Schedules |
+| **Fase 3: Face Registration** | 3-4 hari | Integrasi face-api.js, UI registrasi wajah |
+| **Fase 4: Absensi Core** | 4-5 hari | Geolocation + Face Recognition + penyimpanan |
+| **Fase 5: Dashboard** | 3-4 hari | Dashboard per role dengan statistik |
+| **Fase 6: Laporan** | 2-3 hari | Laporan, filter, export PDF/Excel |
+| **Fase 7: Polish & Testing** | 3-4 hari | UI polish, responsive, bug fixing, testing |
+| **Total** | **~20-27 hari** | |
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Pilihan Peta**: Rancangan ini menggunakan **Leaflet.js** (open-source, gratis) untuk menampilkan peta. Alternatif lain adalah Google Maps API (berbayar setelah kuota gratis). Apakah Leaflet.js sudah cukup?
+
+> [!IMPORTANT]
+> **Face Recognition di Server vs Client**: Rancangan ini melakukan deteksi wajah di **client** (browser) menggunakan face-api.js, lalu descriptor dikirim ke server untuk matching. Alternatifnya adalah melakukan semua proses di server (menggunakan Python microservice). Pendekatan client-side lebih ringan untuk server. Apakah setuju?
+
+## Open Questions
+
+1. **Jumlah kelompok KKN**: Apakah sistem ini untuk 1 kelompok saja atau bisa menampung banyak kelompok KKN?
+2. **Check-out**: Apakah perlu fitur check-out (absen pulang) selain check-in?
+3. **Absensi izin/sakit**: Bagaimana mekanisme izin/sakit? Apakah bisa langsung pilih dari sistem atau perlu persetujuan DPL/Koordinator?
+4. **Deployment**: Akan di-deploy di mana? (VPS, shared hosting, atau Laragon lokal saja untuk demo?)
+5. **Notifikasi**: Apakah perlu fitur notifikasi (email/WhatsApp) jika ada anggota yang belum absen?
+6. **Multi-jadwal per hari**: Apakah bisa ada lebih dari 1 jadwal kegiatan dalam 1 hari?
+
+---
+
+## Verification Plan
+
+### Automated Tests
+```bash
+php artisan test                    # Run Laravel feature & unit tests
+npm run build                       # Pastikan assets ter-compile tanpa error
+php artisan migrate:fresh --seed    # Test migrations & seeders
+```
+
+### Manual Verification
+- Test absensi dengan kamera laptop/HP
+- Test validasi lokasi GPS dengan titik koordinat asli
+- Test akses berdasarkan role (pastikan anggota tidak bisa akses admin)
+- Test responsive di mobile browser
+- Test export PDF & Excel
