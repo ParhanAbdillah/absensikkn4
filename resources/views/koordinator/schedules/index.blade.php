@@ -1,17 +1,18 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center w-full">
-            <h2 class="font-extrabold text-xl text-slate-800 tracking-tight">
-                {{ __('Kelola Jadwal Kegiatan') }}
-            </h2>
-            <button @click="$dispatch('open-modal', 'modal-tambah-jadwal')" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-200">
-                + Tambah Jadwal
-            </button>
-        </div>
-    </x-slot>
+    <div x-data="scheduleIndex()">
+        <x-slot name="header">
+            <div class="flex justify-between items-center w-full">
+                <h2 class="font-extrabold text-xl text-slate-800 tracking-tight">
+                    {{ __('Kelola Jadwal Kegiatan') }}
+                </h2>
+                <button @click="$dispatch('open-modal', 'modal-tambah-jadwal')" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-200">
+                    + Tambah Jadwal
+                </button>
+            </div>
+        </x-slot>
 
-    <div class="py-6" x-data="scheduleIndex()">
-        <div class="max-w-7xl mx-auto">
+        <div class="py-6">
+            <div class="max-w-7xl mx-auto">
             
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-2xl border border-slate-100">
                 <div class="p-8">
@@ -192,4 +193,5 @@
             }
         }
     </script>
+    </div>
 </x-app-layout>

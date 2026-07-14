@@ -5,10 +5,10 @@
         </h2>
     </x-slot>
 
-    <!-- face-api.js & Leaflet.js -->
+    <!-- face-api.js & Leaflet.js (Lokal) -->
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="{{ asset('leaflet.css') }}" />
+    <script src="{{ asset('leaflet.js') }}"></script>
 
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">

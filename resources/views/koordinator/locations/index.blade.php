@@ -1,4 +1,5 @@
 <x-app-layout>
+    <div x-data="locationIndex()">
     <x-slot name="header">
         <div class="flex justify-between items-center w-full">
             <h2 class="font-extrabold text-xl text-slate-800 tracking-tight">
@@ -10,11 +11,11 @@
         </div>
     </x-slot>
 
-    <!-- Leaflet.js -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet.js (Lokal) -->
+    <link rel="stylesheet" href="{{ asset('leaflet.css') }}" />
+    <script src="{{ asset('leaflet.js') }}"></script>
 
-    <div class="py-6" x-data="locationIndex()">
+    <div class="py-6">
         <div class="max-w-7xl mx-auto">
             
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-2xl border border-slate-100">
@@ -304,4 +305,6 @@
             }
         }
     </script>
+</div>
 </x-app-layout>
+
