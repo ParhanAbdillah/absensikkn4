@@ -55,10 +55,8 @@
                                 </div>
 
                                 <div class="mt-6">
-                                    <button type="button" @click="captureFace()" :disabled="!modelsLoaded || capturing || isProcessing" :class="(modelsLoaded && !capturing && !isProcessing) ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-400 cursor-not-allowed'" class="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest active:bg-indigo-900 transition ease-in-out duration-150">
-                                        <span x-show="isProcessing">Memproses Wajah...</span>
-                                        <span x-show="!isProcessing && !modelsLoaded">Memuat Model AI...</span>
-                                        <span x-show="!isProcessing && modelsLoaded">Daftarkan Wajah</span>
+                                    <button type="button" @click="captureFace()" :disabled="!modelsLoaded || isProcessing" :class="(modelsLoaded && !isProcessing) ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-100' : 'bg-gray-300 cursor-not-allowed text-gray-500'" class="w-full inline-flex justify-center items-center px-4 py-3.5 border border-transparent rounded-xl font-bold text-xs uppercase tracking-widest text-white transition">
+                                        <span x-text="isProcessing ? 'Memproses Wajah...' : (modelsLoaded ? 'Daftarkan Wajah' : 'Memuat Model AI...')"></span>
                                     </button>
                                 </div>
                             </div>
