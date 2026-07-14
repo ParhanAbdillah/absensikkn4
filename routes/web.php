@@ -31,8 +31,13 @@ Route::middleware(['auth', 'role:koordinator'])->prefix('koordinator')->name('ko
 });
 
 // Anggota Routes
-Route::middleware(['auth', 'role:anggota'])->prefix('anggota')->name('anggota.')->group(function () {
+Route::middleware(['auth', 'role:anggota,koordinator'])->prefix('anggota')->name('anggota.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Anggota\DashboardController::class, 'index'])->name('dashboard');
+    
+    // Face Registration Routes
+    Route::get('/face/register', [\App\Http\Controllers\Anggota\FaceRegistrationController::class, 'index'])->name('face.register');
+    Route::post('/face/register', [\App\Http\Controllers\Anggota\FaceRegistrationController::class, 'store'])->name('face.store');
+    Route::delete('/face/register', [\App\Http\Controllers\Anggota\FaceRegistrationController::class, 'destroy'])->name('face.destroy');
 });
 
 Route::middleware('auth')->group(function () {

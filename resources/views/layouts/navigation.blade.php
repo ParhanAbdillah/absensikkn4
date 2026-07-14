@@ -23,6 +23,11 @@
                             {{ __('Kelola Jadwal') }}
                         </x-nav-link>
                     @endif
+                    @if(Auth::user()->isAnggota() || Auth::user()->isKoordinator())
+                        <x-nav-link :href="route('anggota.face.register')" :active="request()->routeIs('anggota.face.register')">
+                            {{ __('Registrasi Wajah') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
