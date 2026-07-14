@@ -27,6 +27,14 @@
                         <x-nav-link :href="route('anggota.face.register')" :active="request()->routeIs('anggota.face.register')">
                             {{ __('Registrasi Wajah') }}
                         </x-nav-link>
+                        @if(Auth::user()->faceData)
+                            <x-nav-link :href="route('anggota.attendance.index')" :active="request()->routeIs('anggota.attendance.index')">
+                                {{ __('Mulai Absen') }}
+                            </x-nav-link>
+                        @endif
+                        <x-nav-link :href="route('anggota.attendance.history')" :active="request()->routeIs('anggota.attendance.history')">
+                            {{ __('Riwayat Absensi') }}
+                        </x-nav-link>
                     @endif
                 </div>
             </div>

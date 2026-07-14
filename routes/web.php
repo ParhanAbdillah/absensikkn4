@@ -38,6 +38,12 @@ Route::middleware(['auth', 'role:anggota,koordinator'])->prefix('anggota')->name
     Route::get('/face/register', [\App\Http\Controllers\Anggota\FaceRegistrationController::class, 'index'])->name('face.register');
     Route::post('/face/register', [\App\Http\Controllers\Anggota\FaceRegistrationController::class, 'store'])->name('face.store');
     Route::delete('/face/register', [\App\Http\Controllers\Anggota\FaceRegistrationController::class, 'destroy'])->name('face.destroy');
+
+    // Attendance Routes
+    Route::get('/attendance', [\App\Http\Controllers\Anggota\AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/attendance/check-location', [\App\Http\Controllers\Anggota\AttendanceController::class, 'checkLocation'])->name('attendance.check-location');
+    Route::post('/attendance/store', [\App\Http\Controllers\Anggota\AttendanceController::class, 'store'])->name('attendance.store');
+    Route::get('/attendance/history', [\App\Http\Controllers\Anggota\AttendanceController::class, 'history'])->name('attendance.history');
 });
 
 Route::middleware('auth')->group(function () {
