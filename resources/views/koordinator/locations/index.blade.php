@@ -5,9 +5,6 @@
             <h2 class="font-extrabold text-xl text-slate-800 tracking-tight">
                 {{ __('Kelola Lokasi Absensi') }}
             </h2>
-            <button @click="$dispatch('open-modal', 'modal-tambah-lokasi')" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-200">
-                + Tambah Lokasi
-            </button>
         </div>
     </x-slot>
 
@@ -20,6 +17,13 @@
             
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-2xl border border-slate-100">
                 <div class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-900">Daftar Titik Lokasi</h3>
+                        <button @click="$dispatch('open-modal', 'modal-tambah-lokasi')" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-200">
+                            + Tambah Lokasi
+                        </button>
+                    </div>
+
                     @if($locations->isEmpty())
                         <div class="text-center py-12 text-slate-400">
                             <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>

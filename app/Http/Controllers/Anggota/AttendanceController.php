@@ -23,25 +23,21 @@ class AttendanceController extends Controller
                 ->with('error', 'Silakan daftarkan wajah Anda terlebih dahulu sebelum melakukan absensi.');
         }
 
-        // Ambil jadwal hari ini yang aktif
-        $schedules = Schedule::with('location')
-            ->whereDate('activity_date', Carbon::today())
-            ->where('is_active', true)
-            ->get();
+        // Ambil lokasi gps yang aktif untuk dicocokkan
+        $locations = Location::where('is_active', true)->get();
 
-        return view('anggota.attendance.index', compact('schedules'));
+        return view('anggota.attendance.index', compact('locations'));
     }
 
     public function checkLocation(Request $request)
     {
         $request->validate([
-            'schedule_id' => 'required|exists:schedules,id',
+            'location_id' => 'required|exists:locations,id',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
         ]);
 
-        $schedule = Schedule::with('location')->find($request->schedule_id);
-        $location = $schedule->location;
+        $location = Location::find($request->location_id);
 
         $distance = $this->calculateHaversine(
             $request->latitude,
@@ -50,7 +46,6 @@ class AttendanceController extends Controller
             $location->longitude
         );
 
-        // Jika jarak dalam radius (misal 30m dari lokasi jadwal)
         $isValid = $distance <= $location->radius_meters;
 
         return response()->json([
@@ -65,9 +60,9 @@ class AttendanceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'schedule_id' => 'required|exists:schedules,id',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'location_id' => 'required|exists:locations,id',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'descriptor' => 'required|json', // Client-side face descriptor
             'image' => 'required|string', // Base64 capture saat absen
         ]);
@@ -75,31 +70,34 @@ class AttendanceController extends Controller
         $user = auth()->user();
         $today = Carbon::today();
 
-        // 1. Cek apakah sudah absen hari ini untuk jadwal tersebut
+        // 1. Cek apakah sudah absen hari ini
         $existing = Attendance::where('user_id', $user->id)
-            ->where('schedule_id', $request->schedule_id)
+            ->whereDate('check_in_at', $today)
             ->first();
 
         if ($existing) {
-            return response()->json(['success' => false, 'message' => 'Anda sudah melakukan absensi untuk kegiatan ini.']);
+            return response()->json(['success' => false, 'message' => 'Anda sudah melakukan absensi hari ini.']);
         }
 
-        $schedule = Schedule::with('location')->find($request->schedule_id);
-        $location = $schedule->location;
+        $location = Location::find($request->location_id);
 
-        // 2. Validasi ulang GPS (Server-side)
-        $distance = $this->calculateHaversine(
-            $request->latitude,
-            $request->longitude,
-            $location->latitude,
-            $location->longitude
-        );
+        // 2. Hitung jarak GPS (Server-side) jika ada koordinat
+        $distance = null;
+        $notes = null;
 
-        if ($distance > $location->radius_meters) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Absensi ditolak. Anda berada di luar radius lokasi absensi (' . round($distance, 2) . ' meter).'
-            ]);
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $distance = $this->calculateHaversine(
+                $request->latitude,
+                $request->longitude,
+                $location->latitude,
+                $location->longitude
+            );
+
+            if ($distance > $location->radius_meters) {
+                $notes = 'Absen di luar radius lokasi (' . round($distance, 2) . ' meter)';
+            }
+        } else {
+            $notes = 'Absen tanpa GPS (dilewati)';
         }
 
         // 3. Validasi Face Matching (Euclidean Distance)
@@ -128,24 +126,10 @@ class AttendanceController extends Controller
         $imagePath = 'attendances/' . $user->id . '_' . time() . '.jpg';
         Storage::disk('public')->put($imagePath, base64_decode($image));
 
-        // 5. Cek Status Kehadiran (Hadir vs Terlambat)
-        $status = 'hadir';
+        // 5. Simpan Record Kehadiran
         $now = Carbon::now();
-        $startTime = Carbon::createFromFormat('H:i:s', $schedule->start_time);
-        
-        if ($schedule->tolerance_time) {
-            $toleranceTime = Carbon::createFromFormat('H:i:s', $schedule->tolerance_time);
-            if ($now->format('H:i:s') > $toleranceTime->format('H:i:s')) {
-                $status = 'terlambat';
-            }
-        } elseif ($now->format('H:i:s') > $startTime->format('H:i:s')) {
-            $status = 'terlambat';
-        }
-
-        // 6. Simpan Record Kehadiran
         Attendance::create([
             'user_id' => $user->id,
-            'schedule_id' => $request->schedule_id,
             'location_id' => $location->id,
             'check_in_at' => $now,
             'check_in_lat' => $request->latitude,
@@ -153,19 +137,20 @@ class AttendanceController extends Controller
             'face_match_score' => $matchScore,
             'photo_path' => $imagePath,
             'distance_meters' => $distance,
-            'status' => $status,
+            'status' => 'hadir',
+            'notes' => $notes,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Absensi berhasil dicatat! Status: ' . ucfirst($status)
+            'message' => 'Absensi berhasil dicatat! Status: Hadir'
         ]);
     }
 
     public function history()
     {
         $user = auth()->user();
-        $attendances = Attendance::with(['schedule.location', 'approvedBy'])
+        $attendances = Attendance::with(['location', 'approvedBy'])
             ->where('user_id', $user->id)
             ->latest()
             ->paginate(10);

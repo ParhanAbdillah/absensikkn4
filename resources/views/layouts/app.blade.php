@@ -19,6 +19,19 @@
             body {
                 font-family: 'Inter', sans-serif;
             }
+            .animate-card {
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .animate-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.08);
+            }
+            .animate-button {
+                transition: all 0.2s ease-in-out;
+            }
+            .animate-button:active {
+                transform: scale(0.95);
+            }
         </style>
     </head>
     <body class="font-sans antialiased bg-[#f8fafc] text-slate-800" x-data="{}">
@@ -74,10 +87,10 @@
         </div>
 
         <!-- Google Drive Styled Layout (EXACT COPY OF ATTACHED SCREENSHOT) -->
-        <div class="min-h-screen flex flex-col md:flex-row bg-[#f8fafc]">
+        <div class="h-screen flex flex-col md:flex-row bg-[#f8fafc] overflow-hidden">
             
             <!-- Left Sidebar Navigation (Google Drive Look: White bg, clean text, blue/green hover/active states) -->
-            <aside class="w-full md:w-64 bg-white flex flex-col flex-shrink-0 border-r border-slate-200">
+            <aside class="hidden md:flex w-full md:w-64 h-full bg-white flex-col flex-shrink-0 border-r border-slate-200 overflow-y-auto">
                 <!-- Branding Header -->
                 <div class="p-6 flex items-center gap-3 border-b border-slate-100">
                     <img src="{{ asset('logo_sirnaraja.png') }}" class="w-10 h-10 object-contain rounded" alt="Logo KKN">
@@ -105,13 +118,17 @@
                     @if(Auth::user()->isKoordinator())
                         <div class="pt-4 pb-1.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">PENGELOLAAN</div>
                         
+                        <a href="{{ route('koordinator.users.index') }}" class="flex items-center gap-4 px-4 py-2.5 rounded-full transition font-medium text-sm {{ request()->routeIs('koordinator.users.*') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-100 text-slate-600' }}">
+                            <svg class="w-5 h-5 text-slate-500 {{ request()->routeIs('koordinator.users.*') ? 'text-emerald-600' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            Kelola Anggota
+                        </a>
                         <a href="{{ route('koordinator.locations.index') }}" class="flex items-center gap-4 px-4 py-2.5 rounded-full transition font-medium text-sm {{ request()->routeIs('koordinator.locations.*') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-100 text-slate-600' }}">
                             <svg class="w-5 h-5 text-slate-500 {{ request()->routeIs('koordinator.locations.*') ? 'text-emerald-600' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             Titik Lokasi GPS
                         </a>
-                        <a href="{{ route('koordinator.schedules.index') }}" class="flex items-center gap-4 px-4 py-2.5 rounded-full transition font-medium text-sm {{ request()->routeIs('koordinator.schedules.*') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-100 text-slate-600' }}">
-                            <svg class="w-5 h-5 text-slate-500 {{ request()->routeIs('koordinator.schedules.*') ? 'text-emerald-600' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            Jadwal Kegiatan
+                        <a href="{{ route('koordinator.attendance.rekap') }}" class="flex items-center gap-4 px-4 py-2.5 rounded-full transition font-medium text-sm {{ request()->routeIs('koordinator.attendance.rekap') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-100 text-slate-600' }}">
+                            <svg class="w-5 h-5 text-slate-500 {{ request()->routeIs('koordinator.attendance.rekap') ? 'text-emerald-600' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Rekap Absensi
                         </a>
                     @endif
 
@@ -154,9 +171,9 @@
             </aside>
 
             <!-- Main Content Pane -->
-            <div class="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
+            <div class="flex-1 flex flex-col min-w-0 bg-[#f8fafc] h-full overflow-hidden relative">
                 <!-- Header / Search Bar area in Google Drive -->
-                <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between">
+                <header class="h-16 flex-shrink-0 bg-white border-b border-slate-200 px-5 md:px-8 flex items-center justify-between">
                     <div>
                         @isset($header)
                             {{ $header }}
@@ -170,11 +187,92 @@
                 </header>
 
                 <!-- Page Content Section -->
-                <main class="flex-1 p-8 overflow-y-auto">
+                <main class="flex-1 p-5 md:p-8 pb-28 md:pb-8 overflow-y-auto">
                     {{ $slot }}
                 </main>
             </div>
 
         </div>
+
+        <!-- Mobile Bottom Navigation (Floating Capsule style) -->
+        <div class="md:hidden fixed bottom-6 left-4 right-4 z-50">
+            <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex justify-between items-center px-6 py-3 relative">
+                
+                <!-- 1. Home -->
+                <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('dashboard') ? 'text-indigo-600 font-bold' : 'text-slate-400' }}">
+                    <svg class="w-6 h-6" fill="{{ request()->routeIs('dashboard') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="text-[10px]">Home</span>
+                </a>
+
+                @if(Auth::user()->isAnggota())
+                    <!-- 2. Panduan/Jadwal (New Icon) -->
+                    <a href="{{ route('anggota.panduan') }}" class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('anggota.panduan') ? 'text-indigo-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-6 h-6" fill="{{ request()->routeIs('anggota.panduan') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[10px]">Panduan</span>
+                    </a>
+
+                    <!-- 3. Center Floating Button (Scanner) -->
+                    <div class="absolute left-1/2 -translate-x-1/2 -top-6">
+                        @if(Auth::user()->faceData)
+                            <a href="{{ route('anggota.attendance.index') }}" class="flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full text-white shadow-lg border-[6px] border-[#f8fafc] transition transform active:scale-95">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </a>
+                        @else
+                            <a href="{{ route('anggota.face.register') }}" class="flex items-center justify-center w-16 h-16 bg-blue-500 rounded-full text-white shadow-lg border-[6px] border-[#f8fafc] transition transform active:scale-95">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </a>
+                        @endif
+                    </div>
+
+                    <!-- 4. History -->
+                    <a href="{{ route('anggota.attendance.history') }}" class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('anggota.attendance.history') ? 'text-indigo-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-[10px]">History</span>
+                    </a>
+
+                    <!-- 5. Profile -->
+                    <a href="{{ route('profile.edit') }}" class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('profile.edit') ? 'text-indigo-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-6 h-6" fill="{{ request()->routeIs('profile.edit') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span class="text-[10px]">Profil</span>
+                    </a>
+                @elseif(Auth::user()->isKoordinator())
+                    <!-- 2. Anggota -->
+                    <a href="{{ route('koordinator.users.index') }}" class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('koordinator.users.*') ? 'text-indigo-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-6 h-6" fill="{{ request()->routeIs('koordinator.users.*') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <span class="text-[10px]">Anggota</span>
+                    </a>
+
+                    <!-- 3. Center Floating Button (Rekap) -->
+                    <div class="absolute left-1/2 -translate-x-1/2 -top-6">
+                        <a href="{{ route('koordinator.attendance.rekap') }}" class="flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full text-white shadow-lg border-[6px] border-[#f8fafc] transition transform active:scale-95">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </a>
+                    </div>
+
+                    <!-- 4. Lokasi -->
+                    <a href="{{ route('koordinator.locations.index') }}" class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('koordinator.locations.*') ? 'text-indigo-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-6 h-6" fill="{{ request()->routeIs('koordinator.locations.*') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span class="text-[10px]">Lokasi</span>
+                    </a>
+
+                    <!-- 5. Profile -->
+                    <a href="{{ route('profile.edit') }}" class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('profile.edit') ? 'text-indigo-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-6 h-6" fill="{{ request()->routeIs('profile.edit') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span class="text-[10px]">Profil</span>
+                    </a>
+                @else
+                    <!-- DPL / Others -->
+                    <div class="w-12"></div>
+                    <div class="w-12"></div>
+                    <div class="w-12"></div>
+                    <a href="{{ route('profile.edit') }}" class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('profile.edit') ? 'text-indigo-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-6 h-6" fill="{{ request()->routeIs('profile.edit') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span class="text-[10px]">Profil</span>
+                    </a>
+                @endif
+            </div>
+        </div>
+        
+        @stack('scripts')
     </body>
 </html>

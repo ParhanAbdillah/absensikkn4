@@ -5,9 +5,6 @@
                 <h2 class="font-extrabold text-xl text-slate-800 tracking-tight">
                     {{ __('Kelola Jadwal Kegiatan') }}
                 </h2>
-                <button @click="$dispatch('open-modal', 'modal-tambah-jadwal')" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-200">
-                    + Tambah Jadwal
-                </button>
             </div>
         </x-slot>
 
@@ -16,6 +13,12 @@
             
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-2xl border border-slate-100">
                 <div class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-900">Daftar Jadwal</h3>
+                        <button @click="$dispatch('open-modal', 'modal-tambah-jadwal')" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-200">
+                            + Tambah Jadwal
+                        </button>
+                    </div>
                     @if($schedules->isEmpty())
                         <div class="text-center py-12 text-slate-400">
                             <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>

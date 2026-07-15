@@ -15,27 +15,40 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
         
-        $totalMembers = User::where('role', 'anggota')->count();
-        $totalSchedules = Schedule::count();
+        $totalMembers   = User::where('role', 'anggota')->count();
         $totalLocations = Location::count();
         
-        // Ambil jadwal hari ini
-        $todaySchedules = Schedule::with('location')
-            ->whereDate('activity_date', $today)
-            ->get();
+        // Hitung total absen masuk hari ini
+        $hadirCount = Attendance::whereDate('check_in_at', $today)->count();
+        $hadirPersentase = $totalMembers > 0 ? round(($hadirCount / $totalMembers) * 100) : 0;
+        $todayAttendancesCount = $hadirCount;
             
         // Kehadiran hari ini
-        $todayAttendances = Attendance::with('user')
+        $todayAttendances = Attendance::with(['user', 'location'])
             ->whereDate('check_in_at', $today)
             ->latest()
             ->get();
 
+        // Data 7 hari terakhir untuk bar chart
+        $weeklyData = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $count = Attendance::whereDate('check_in_at', $date)->count();
+            $weeklyData[] = [
+                'label' => $date->isoFormat('ddd'),
+                'count' => $count,
+                'date'  => $date->toDateString(),
+            ];
+        }
+
         return view('koordinator.dashboard', compact(
             'totalMembers', 
-            'totalSchedules', 
-            'totalLocations', 
-            'todaySchedules', 
-            'todayAttendances'
+            'totalLocations',
+            'hadirCount',
+            'hadirPersentase',
+            'todayAttendancesCount',
+            'todayAttendances',
+            'weeklyData'
         ));
     }
 
@@ -51,10 +64,9 @@ class DashboardController extends Controller
                 ->exists();
 
             if (!$hasAttended && $member->phone) {
-                // Call artisan command logic inline or trigger command
                 \Illuminate\Support\Facades\Artisan::call('attendance:send-reminder');
                 $sentCount++;
-                break; // Break since the command handles all users, calling once is enough
+                break;
             }
         }
 

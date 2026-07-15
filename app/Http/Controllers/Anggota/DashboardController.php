@@ -11,27 +11,51 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
+        $user  = auth()->user();
         $today = Carbon::today();
         
         // Cek apakah sudah absen hari ini
         $todayAttendance = Attendance::where('user_id', $user->id)
             ->whereDate('check_in_at', $today)
             ->first();
-            
-        // Jadwal hari ini
-        $todaySchedules = Schedule::with('location')
-            ->whereDate('activity_date', $today)
-            ->where('is_active', true)
+
+        // Riwayat 30 hari untuk streak dan statistik
+        $month_start = Carbon::today()->subDays(29);
+        $allAttendances = Attendance::where('user_id', $user->id)
+            ->where('check_in_at', '>=', $month_start)
             ->get();
-            
-        // Riwayat absensi pribadi
-        $history = Attendance::with('schedule.location')
+
+        $totalHadir = $allAttendances->count();
+        $daysInMonth = 30;
+        $persentase  = $daysInMonth > 0 ? round(($totalHadir / $daysInMonth) * 100) : 0;
+        
+        // Data 7 hari terakhir untuk bar chart
+        $weeklyData = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $hadirOnDay = Attendance::where('user_id', $user->id)
+                ->whereDate('check_in_at', $date)
+                ->exists();
+            $weeklyData[] = [
+                'label' => $date->isoFormat('ddd'),
+                'count' => $hadirOnDay ? 1 : 0,
+                'date'  => $date->toDateString(),
+            ];
+        }
+
+        // Riwayat absensi terbaru
+        $history = Attendance::with(['location'])
             ->where('user_id', $user->id)
             ->latest()
             ->take(5)
             ->get();
 
-        return view('anggota.dashboard', compact('todayAttendance', 'todaySchedules', 'history'));
+        return view('anggota.dashboard', compact(
+            'todayAttendance',
+            'totalHadir',
+            'persentase',
+            'weeklyData',
+            'history'
+        ));
     }
 }

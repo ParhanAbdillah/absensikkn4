@@ -29,11 +29,22 @@ Route::middleware(['auth', 'role:koordinator'])->prefix('koordinator')->name('ko
     Route::post('/schedules/{schedule}/send-reminder', [\App\Http\Controllers\Koordinator\DashboardController::class, 'sendReminder'])->name('schedules.send-reminder');
     Route::resource('locations', \App\Http\Controllers\Koordinator\LocationController::class);
     Route::resource('schedules', \App\Http\Controllers\Koordinator\ScheduleController::class);
+    Route::resource('users', \App\Http\Controllers\Koordinator\UserController::class)->only(['index','store','update','destroy']);
+    Route::get('/attendance/rekap', [\App\Http\Controllers\Koordinator\AttendanceController::class, 'rekap'])->name('attendance.rekap');
+    Route::get('/attendance/rekap/print', [\App\Http\Controllers\Koordinator\AttendanceController::class, 'print'])->name('attendance.rekap.print');
+
+    // Leave Request Management
+    Route::get('/leave', [\App\Http\Controllers\Koordinator\LeaveRequestController::class, 'index'])->name('leave.index');
+    Route::post('/leave/{leaveRequest}/approve', [\App\Http\Controllers\Koordinator\LeaveRequestController::class, 'approve'])->name('leave.approve');
+    Route::post('/leave/{leaveRequest}/reject', [\App\Http\Controllers\Koordinator\LeaveRequestController::class, 'reject'])->name('leave.reject');
 });
 
 // Anggota Routes
 Route::middleware(['auth', 'role:anggota,koordinator'])->prefix('anggota')->name('anggota.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Anggota\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/panduan', function () {
+        return view('anggota.panduan');
+    })->name('panduan');
     
     // Face Registration Routes
     Route::get('/face/register', [\App\Http\Controllers\Anggota\FaceRegistrationController::class, 'index'])->name('face.register');
@@ -45,6 +56,11 @@ Route::middleware(['auth', 'role:anggota,koordinator'])->prefix('anggota')->name
     Route::post('/attendance/check-location', [\App\Http\Controllers\Anggota\AttendanceController::class, 'checkLocation'])->name('attendance.check-location');
     Route::post('/attendance/store', [\App\Http\Controllers\Anggota\AttendanceController::class, 'store'])->name('attendance.store');
     Route::get('/attendance/history', [\App\Http\Controllers\Anggota\AttendanceController::class, 'history'])->name('attendance.history');
+
+    // Leave Request Routes
+    Route::get('/leave', [\App\Http\Controllers\Anggota\LeaveRequestController::class, 'index'])->name('leave.index');
+    Route::get('/leave/create', [\App\Http\Controllers\Anggota\LeaveRequestController::class, 'create'])->name('leave.create');
+    Route::post('/leave', [\App\Http\Controllers\Anggota\LeaveRequestController::class, 'store'])->name('leave.store');
 });
 
 Route::middleware('auth')->group(function () {

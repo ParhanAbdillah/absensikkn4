@@ -38,8 +38,42 @@
                         </div>
                     @else
                         <!-- Form / Kamera Registrasi Wajah -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div>
+                        <div class="flex flex-col gap-6">
+                            <!-- Camera section FIRST on mobile -->
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="relative w-full bg-black rounded-2xl overflow-hidden border-2 border-slate-700 shadow-inner mb-2" style="height: 360px;">
+                                    <!-- Video Stream -->
+                                    <video x-ref="video" autoplay muted playsinline class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
+                                    
+                                    <!-- Face Overlay Guide -->
+                                    <div class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center overflow-hidden">
+                                        <!-- Oval shape for face alignment with darkened background outside -->
+                                        <div class="border-4 border-dashed border-emerald-400 rounded-[100%] shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] animate-pulse" style="width: 200px; height: 260px;"></div>
+                                    </div>
+
+                                    <!-- Corner Guides -->
+                                    <div class="absolute top-3 left-3 w-8 h-8 border-t-4 border-l-4 border-emerald-400 rounded-tl-lg"></div>
+                                    <div class="absolute top-3 right-3 w-8 h-8 border-t-4 border-r-4 border-emerald-400 rounded-tr-lg"></div>
+                                    <div class="absolute bottom-3 left-3 w-8 h-8 border-b-4 border-l-4 border-emerald-400 rounded-bl-lg"></div>
+                                    <div class="absolute bottom-3 right-3 w-8 h-8 border-b-4 border-r-4 border-emerald-400 rounded-br-lg"></div>
+                                </div>
+                                <span class="text-xs text-gray-500 mb-4">Pastikan kamera diizinkan di browser Anda.</span>
+
+                                <!-- Status Message Banner -->
+                                <div class="w-full mb-4" x-show="statusMessage">
+                                    <div :class="statusType === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : (statusType === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-yellow-50 border-yellow-200 text-yellow-700')" class="p-3 border rounded-xl text-xs font-bold text-center">
+                                        <span x-text="statusMessage"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Button directly below camera / status -->
+                                <button type="button" @click="captureFace()" :disabled="!modelsLoaded || isProcessing" :class="(modelsLoaded && !isProcessing) ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-100' : 'bg-gray-300 cursor-not-allowed text-gray-500'" class="w-full inline-flex justify-center items-center px-4 py-3.5 border border-transparent rounded-xl font-bold text-xs uppercase tracking-widest text-white transition">
+                                    <span x-text="isProcessing ? 'Memproses Wajah...' : (modelsLoaded ? 'Daftarkan Wajah' : 'Memuat Model AI...')"></span>
+                                </button>
+                            </div>
+
+                            <!-- Instructions at the very bottom -->
+                            <div class="border-t pt-4">
                                 <h3 class="text-lg font-bold text-gray-900 mb-2">Petunjuk Pendaftaran:</h3>
                                 <ul class="list-decimal pl-5 space-y-2 text-gray-600 text-sm mb-6">
                                     <li>Berada di ruangan dengan pencahayaan yang cukup.</li>
@@ -47,29 +81,6 @@
                                     <li>Jangan menggunakan kacamata hitam, masker, atau topi.</li>
                                     <li>Hadap lurus ke kamera saat menekan tombol "Ambil Foto Wajah".</li>
                                 </ul>
-
-                                <div class="mb-4" x-show="statusMessage">
-                                    <div :class="statusType === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-yellow-100 border-yellow-400 text-yellow-700'" class="p-3 border rounded text-sm">
-                                        <span x-text="statusMessage"></span>
-                                    </div>
-                                </div>
-
-                                <div class="mt-6">
-                                    <button type="button" @click="captureFace()" :disabled="!modelsLoaded || isProcessing" :class="(modelsLoaded && !isProcessing) ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-100' : 'bg-gray-300 cursor-not-allowed text-gray-500'" class="w-full inline-flex justify-center items-center px-4 py-3.5 border border-transparent rounded-xl font-bold text-xs uppercase tracking-widest text-white transition">
-                                        <span x-text="isProcessing ? 'Memproses Wajah...' : (modelsLoaded ? 'Daftarkan Wajah' : 'Memuat Model AI...')"></span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col items-center justify-center">
-                                <div class="relative w-full aspect-video md:w-80 md:h-80 bg-black rounded-lg overflow-hidden border shadow-inner">
-                                    <!-- Video Stream -->
-                                    <video x-ref="video" autoplay muted playsinline class="w-full h-full object-cover"></video>
-                                    
-                                    <!-- Overlay Frame -->
-                                    <div class="absolute inset-0 border-4 border-dashed border-indigo-500 rounded-lg pointer-events-none opacity-40"></div>
-                                </div>
-                                <span class="text-xs text-gray-500 mt-2">Pastikan kamera diizinkan di browser Anda.</span>
                             </div>
                         </div>
                     @endif
@@ -93,10 +104,12 @@
 
                 async init() {
                     try {
-                        // Load models face-api.js dari local folder public/models
-                        await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
-                        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-                        await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+                        // Load models face-api.js dari local folder public/models secara paralel
+                        await Promise.all([
+                            faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+                            faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+                            faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+                        ]);
                         
                         this.modelsLoaded = true;
                         this.statusMessage = 'Model AI siap. Mengaktifkan kamera...';
