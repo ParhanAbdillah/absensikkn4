@@ -77,8 +77,13 @@
                                     <div class="absolute bottom-3 right-3 w-8 h-8 border-b-4 border-r-4 border-emerald-400 rounded-br-lg"></div>
                                     <!-- Status Message Overlay inside camera -->
                                     <div x-show="statusMessage" class="absolute bottom-0 left-0 right-0 z-20 px-4 py-3">
-                                        <div :class="statusType === 'success' ? 'bg-emerald-900/80 text-emerald-200' : 'bg-red-900/80 text-red-200'" class="p-3 rounded-xl text-xs font-bold text-center backdrop-blur-sm">
+                                        <div :class="statusType === 'success' ? 'bg-emerald-950/90 text-emerald-200 border border-emerald-500/30' : (statusType === 'error' ? 'bg-red-950/90 text-red-200 border border-red-500/30' : 'bg-slate-900/90 text-slate-200')" class="p-3 rounded-xl text-xs font-bold text-center backdrop-blur-sm">
                                             <span x-text="statusMessage"></span>
+                                            <div class="mt-2.5" x-show="statusType === 'error' && capturedBase64">
+                                                <button type="button" @click="verifyWithMockDescriptor()" class="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-amber-150">
+                                                    Gunakan Foto Ini & Absen Manual
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -124,6 +129,7 @@
                 statusType: 'info',
                 selectedLocationId: {{ $locations->first()?->id ?? 'null' }},
                 selectedTitle: '{{ $locations->first()?->name ?? '' }}',
+                capturedBase64: null,
                 
                 // Waktu realtime
                 currentTime: '',
@@ -295,30 +301,83 @@
                     this.statusType = 'info';
 
                     const video = this.$refs.video;
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Delay kecil untuk visual effect & stabilitas tangkapan frame
+                    setTimeout(async () => {
+                        try {
+                            // 1. Capture High Resolution Image (untuk disimpan ke server)
+                            const highResCanvas = document.createElement('canvas');
+                            highResCanvas.width = video.videoWidth || 640;
+                            highResCanvas.height = video.videoHeight || 480;
+                            const highResCtx = highResCanvas.getContext('2d');
+                            highResCtx.drawImage(video, 0, 0, highResCanvas.width, highResCanvas.height);
+                            const base64Image = highResCanvas.toDataURL('image/jpeg', 0.85); // kompresi 85%
+                            this.capturedBase64 = base64Image;
 
-                    const base64Image = canvas.toDataURL('image/jpeg');
+                            // 2. Downscaled Canvas untuk deteksi wajah (Preserve Aspect Ratio agar wajah tidak penyet)
+                            const videoWidth = video.videoWidth || 640;
+                            const videoHeight = video.videoHeight || 480;
+                            
+                            let targetWidth = 320;
+                            let targetHeight = 240;
+                            
+                            if (videoWidth > videoHeight) {
+                                // Landscape
+                                targetWidth = 320;
+                                targetHeight = Math.round((videoHeight / videoWidth) * 320);
+                            } else {
+                                // Portrait (Hp / Mobile)
+                                targetHeight = 320;
+                                targetWidth = Math.round((videoWidth / videoHeight) * 320);
+                            }
 
-                    const detection = await faceapi.detectSingleFace(video)
-                        .withFaceLandmarks()
-                        .withFaceDescriptor();
+                            const detectionCanvas = document.createElement('canvas');
+                            detectionCanvas.width = targetWidth;
+                            detectionCanvas.height = targetHeight;
+                            const detectionCtx = detectionCanvas.getContext('2d');
+                            detectionCtx.drawImage(video, 0, 0, targetWidth, targetHeight);
 
-                    if (!detection) {
-                        this.statusMessage = 'Wajah tidak terdeteksi. Silakan coba kembali di tempat terang.';
-                        this.statusType = 'error';
-                        this.isProcessing = false;
-                        return;
-                    }
+                            let detection = await faceapi.detectSingleFace(detectionCanvas)
+                                .withFaceLandmarks()
+                                .withFaceDescriptor();
 
-                    // Kirim ke server
-                    this.submitAttendance(JSON.stringify(Array.from(detection.descriptor)), base64Image);
+                            // Fallback: Jika gagal pada resolusi rendah, coba resolusi asli video langsung
+                            if (!detection) {
+                                detection = await faceapi.detectSingleFace(video)
+                                    .withFaceLandmarks()
+                                    .withFaceDescriptor();
+                            }
+
+                            if (!detection) {
+                                this.statusMessage = 'Wajah tidak terdeteksi. Silakan coba kembali di tempat terang.';
+                                this.statusType = 'error';
+                                this.isProcessing = false;
+                                return;
+                            }
+
+                            // Kirim ke server
+                            this.submitAttendance(JSON.stringify(Array.from(detection.descriptor)), base64Image);
+                        } catch (err) {
+                            console.error(err);
+                            this.statusMessage = 'Terjadi kesalahan saat memproses deteksi wajah.';
+                            this.statusType = 'error';
+                            this.isProcessing = false;
+                        }
+                    }, 300);
                 },
 
-                async submitAttendance(descriptor, image) {
+                verifyWithMockDescriptor() {
+                    if (this.isProcessing) return;
+                    this.isProcessing = true;
+                    this.statusMessage = 'Mengirim foto absensi manual...';
+                    this.statusType = 'info';
+
+                    // Kirim ke server dengan is_manual = true dan mock descriptor
+                    const mockDescriptor = JSON.stringify(Array(128).fill(0));
+                    this.submitAttendance(mockDescriptor, this.capturedBase64, true);
+                },
+
+                async submitAttendance(descriptor, image, isManual = false) {
                     try {
                         const response = await fetch('{{ route("anggota.attendance.store") }}', {
                             method: 'POST',
@@ -331,7 +390,8 @@
                                 latitude: this.latitude,
                                 longitude: this.longitude,
                                 descriptor: descriptor,
-                                image: image
+                                image: image,
+                                is_manual: isManual
                             })
                         });
 

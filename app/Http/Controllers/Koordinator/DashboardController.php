@@ -15,7 +15,7 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
         
-        $totalMembers   = User::where('role', 'anggota')->count();
+        $totalMembers   = User::members()->count();
         $totalLocations = Location::count();
         
         // Hitung total absen masuk hari ini
@@ -55,7 +55,7 @@ class DashboardController extends Controller
     public function sendReminder(Schedule $schedule)
     {
         $today = Carbon::today();
-        $members = User::where('role', 'anggota')->where('is_active', true)->get();
+        $members = User::members()->where('is_active', true)->get();
         $sentCount = 0;
 
         foreach ($members as $member) {

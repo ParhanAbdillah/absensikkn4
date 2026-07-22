@@ -21,11 +21,26 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:dpl,koordinator,anggota',
+            'role' => 'required|in:dpl,koordinator,sekretaris,anggota',
             'divisi' => 'nullable|string|max:100',
             'nim' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
+            'signature' => 'nullable|string',
         ]);
+
+        $signaturePath = null;
+        if ($request->filled('signature')) {
+            $sigData = $request->signature;
+            if (preg_match('/^data:image\/(\w+);base64,/', $sigData, $type)) {
+                $sigData = substr($sigData, strpos($sigData, ',') + 1);
+                $sigDecoded = base64_decode($sigData);
+                if ($sigDecoded !== false) {
+                    $fileName = 'signatures/sig_' . uniqid() . '.' . strtolower($type[1]);
+                    \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $sigDecoded);
+                    $signaturePath = $fileName;
+                }
+            }
+        }
 
         User::create([
             'name' => $request->name,
@@ -35,6 +50,7 @@ class UserController extends Controller
             'divisi' => $request->divisi,
             'nim' => $request->nim,
             'phone' => $request->phone,
+            'signature' => $signaturePath,
             'is_active' => true,
         ]);
 
@@ -47,10 +63,11 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'role' => 'required|in:dpl,koordinator,anggota',
+            'role' => 'required|in:dpl,koordinator,sekretaris,anggota',
             'divisi' => 'nullable|string|max:100',
             'nim' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
+            'signature' => 'nullable|string',
         ]);
 
         $data = [
@@ -61,6 +78,23 @@ class UserController extends Controller
             'nim' => $request->nim,
             'phone' => $request->phone,
         ];
+
+        if ($request->filled('signature')) {
+            $sigData = $request->signature;
+            if (preg_match('/^data:image\/(\w+);base64,/', $sigData, $type)) {
+                $sigData = substr($sigData, strpos($sigData, ',') + 1);
+                $sigDecoded = base64_decode($sigData);
+                if ($sigDecoded !== false) {
+                    // Delete old signature
+                    if ($user->signature && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->signature)) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($user->signature);
+                    }
+                    $fileName = 'signatures/sig_' . uniqid() . '.' . strtolower($type[1]);
+                    \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $sigDecoded);
+                    $data['signature'] = $fileName;
+                }
+            }
+        }
 
         if ($request->filled('password')) {
             $request->validate([
@@ -81,6 +115,10 @@ class UserController extends Controller
         if (auth()->id() === $user->id) {
             return redirect()->route('koordinator.users.index')
                 ->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+        }
+
+        if ($user->signature && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->signature)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->signature);
         }
 
         $user->delete();

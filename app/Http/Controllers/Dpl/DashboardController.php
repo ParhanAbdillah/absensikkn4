@@ -14,7 +14,7 @@ class DashboardController extends Controller
     public function index()
     {
         $today = Carbon::today();
-        $totalMembers = User::where('role', 'anggota')->count();
+        $totalMembers = User::members()->count();
         
         $attendances = Attendance::with(['user', 'schedule'])
             ->latest()

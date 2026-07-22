@@ -54,7 +54,7 @@ class SendAttendanceReminder extends Command
             // Atau bisa dijalankan manual via dashboard Koordinator
             
             // Ambil semua anggota kelompok
-            $members = User::where('role', 'anggota')->where('is_active', true)->get();
+            $members = User::members()->where('is_active', true)->get();
 
             foreach ($members as $member) {
                 // Cek apakah anggota ini sudah melakukan absensi untuk jadwal terkait

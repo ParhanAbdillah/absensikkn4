@@ -65,6 +65,7 @@ class AttendanceController extends Controller
             'longitude' => 'nullable|numeric',
             'descriptor' => 'required|json', // Client-side face descriptor
             'image' => 'required|string', // Base64 capture saat absen
+            'is_manual' => 'nullable|boolean',
         ]);
 
         $user = auth()->user();
@@ -103,20 +104,29 @@ class AttendanceController extends Controller
         // 3. Validasi Face Matching (Euclidean Distance)
         $inputDescriptor = json_decode($request->descriptor);
         $storedFace = FaceData::where('user_id', $user->id)->first();
-
+ 
         if (!$storedFace) {
             return response()->json(['success' => false, 'message' => 'Data wajah referensi tidak ditemukan.']);
         }
-
-        $storedDescriptor = $storedFace->descriptor;
-        $matchScore = $this->euclideanDistance($inputDescriptor, $storedDescriptor);
-
-        // Threshold kecocokan wajah (biasanya <= 0.6)
-        if ($matchScore > 0.6) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Verifikasi wajah gagal. Wajah tidak cocok dengan referensi.'
-            ]);
+ 
+        $isManual = $request->boolean('is_manual', false);
+        $matchScore = 0.0;
+ 
+        if (!$isManual) {
+            $storedDescriptor = $storedFace->descriptor;
+            $matchScore = $this->euclideanDistance($inputDescriptor, $storedDescriptor);
+ 
+            // Threshold kecocokan wajah (biasanya <= 0.6)
+            if ($matchScore > 0.6) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Verifikasi wajah gagal. Wajah tidak cocok dengan referensi.'
+                ]);
+            }
+        }
+ 
+        if ($isManual) {
+            $notes = $notes ? $notes . ' (Bypass verifikasi wajah)' : 'Bypass verifikasi wajah';
         }
 
         // 4. Decode dan simpan foto saat absen

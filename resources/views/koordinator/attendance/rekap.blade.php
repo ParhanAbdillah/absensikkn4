@@ -17,14 +17,42 @@
                    target="_blank"
                    class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-200 animate-button">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    Cetak / Print PDF
+                    Print PDF
                 </a>
+                {{-- Word Docx Button with Dropdown --}}
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open"
+                       class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-blue-200 animate-button">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Ekspor Word
+                    </button>
+                    
+                    <div x-show="open" @click.away="open = false" style="display: none;"
+                         class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 z-50 p-4">
+                        <h4 class="text-sm font-bold text-slate-800 mb-3">Ekspor Rentang Tanggal</h4>
+                        <form method="GET" action="{{ route('koordinator.attendance.rekap.export-word') }}">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Dari Tanggal</label>
+                                    <input type="date" name="start_date" value="{{ $selectedDate->toDateString() }}" max="{{ now()->toDateString() }}" class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Sampai Tanggal</label>
+                                    <input type="date" name="end_date" value="{{ $selectedDate->toDateString() }}" max="{{ now()->toDateString() }}" class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+                                </div>
+                                <button type="submit" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 rounded-lg transition">
+                                    Download Docx
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </x-slot>
 
     <div class="py-6" x-data="rekapChart({{ $hadirCount }}, {{ $tidakHadirCount }}, {{ $totalMembers }})">
-        <div class="max-w-7xl mx-auto space-y-6">
+        <div class="max-w-7xl mx-auto space-y-6 mb-8">
 
             {{-- Selected date label --}}
             <div class="flex items-center gap-2 text-sm text-slate-500 font-semibold">
@@ -110,6 +138,7 @@
                                 <thead>
                                     <tr class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
                                         <th class="px-5 py-3 text-left">No</th>
+                                        <th class="px-5 py-3 text-left">Foto</th>
                                         <th class="px-5 py-3 text-left">Nama Anggota</th>
                                         <th class="px-5 py-3 text-left">NIM</th>
                                         <th class="px-5 py-3 text-left">Jam Masuk</th>
@@ -121,6 +150,16 @@
                                     @foreach($attendances as $i => $a)
                                         <tr class="hover:bg-slate-50 transition">
                                             <td class="px-5 py-3 text-slate-400 font-bold">{{ $i + 1 }}</td>
+                                            <td class="px-5 py-3">
+                                                @if($a->photo_path)
+                                                    <img src="{{ Storage::url($a->photo_path) }}" 
+                                                         alt="Foto Absen" 
+                                                         @click="previewUrl = '{{ Storage::url($a->photo_path) }}'; showPreview = true"
+                                                         class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm cursor-zoom-in hover:scale-105 active:scale-95 transition duration-150">
+                                                @else
+                                                    <span class="text-xs text-slate-400 font-semibold">-</span>
+                                                @endif
+                                            </td>
                                             <td class="px-5 py-3 font-bold text-slate-800">
                                                 <div class="flex items-center gap-3">
                                                     <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-extrabold text-xs flex-shrink-0">
@@ -172,6 +211,21 @@
             </div>
             @endif
 
+            {{-- Image Preview Modal --}}
+            <div x-show="showPreview" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-transition x-cloak>
+                <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100" @click.away="showPreview = false">
+                    <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                        <h3 class="font-extrabold text-sm text-slate-700 uppercase tracking-wider">Foto Bukti Absensi</h3>
+                        <button type="button" @click="showPreview = false" class="text-slate-400 hover:text-slate-600 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <div class="p-6 flex justify-center items-center bg-black">
+                        <img :src="previewUrl" class="max-h-[70vh] max-w-full object-contain rounded-lg">
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -180,6 +234,8 @@
     <script>
         function rekapChart(hadir, tidakHadir, total) {
             return {
+                showPreview: false,
+                previewUrl: '',
                 init() {
                     // Counter animation
                     document.querySelectorAll('.counter').forEach(el => {

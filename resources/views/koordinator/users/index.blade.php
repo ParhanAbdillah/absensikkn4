@@ -52,13 +52,14 @@
                                 class="border border-slate-200 rounded-xl pl-3 pr-10 py-2 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white transition">
                             <option value="">Semua Peran</option>
                             <option value="anggota">Anggota</option>
+                            <option value="sekretaris">Sekretaris</option>
                             <option value="koordinator">Koordinator</option>
                             <option value="dpl">DPL</option>
                         </select>
                     </div>
 
                     {{-- Right: Tambah Anggota button --}}
-                    <button @click="$dispatch('open-modal', 'modal-tambah-user')"
+                    <button @click="$dispatch('open-modal', 'modal-tambah-user'); resetAddSignature();"
                             class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-emerald-200">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         Tambah Anggota
@@ -150,6 +151,7 @@
                                         <span class="inline-flex px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full"
                                               :class="{
                                                   'bg-emerald-100 text-emerald-700 border border-emerald-200': u.role === 'koordinator',
+                                                  'bg-purple-100 text-purple-700 border border-purple-200': u.role === 'sekretaris',
                                                   'bg-blue-100 text-blue-700 border border-blue-200': u.role === 'dpl',
                                                   'bg-slate-100 text-slate-600 border border-slate-200': u.role === 'anggota'
                                               }"
@@ -286,10 +288,24 @@
                             <x-input-label for="role" value="Peran *" />
                             <select id="role" name="role" class="border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl shadow-sm block mt-1 w-full text-sm" required>
                                 <option value="anggota">Anggota (Mahasiswa)</option>
+                                <option value="sekretaris">Sekretaris</option>
                                 <option value="koordinator">Koordinator</option>
                                 <option value="dpl">DPL (Dosen)</option>
                             </select>
                         </div>
+                    </div>
+
+                    {{-- Signature Canvas --}}
+                    <div>
+                        <x-input-label value="Tanda Tangan Anggota" />
+                        <div class="relative w-full h-36 border border-slate-200 rounded-xl bg-slate-50 overflow-hidden mt-1">
+                            <canvas id="signatureCanvasAdd" class="w-full h-full cursor-crosshair touch-none"></canvas>
+                            <button type="button" id="clearSigBtnAdd" class="absolute bottom-2 right-2 px-2.5 py-1 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-[10px] font-bold rounded-lg transition shadow-sm">
+                                Hapus TTD
+                            </button>
+                        </div>
+                        <input type="hidden" name="signature" id="signatureInputAdd">
+                        <p class="text-[10px] text-slate-400 mt-1 font-semibold">Gunakan mouse atau layar sentuh untuk menggambar tanda tangan di atas.</p>
                     </div>
                 </div>
 
@@ -355,10 +371,32 @@
                             <x-input-label for="edit_role" value="Peran *" />
                             <select id="edit_role" name="role" class="border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl shadow-sm block mt-1 w-full text-sm" x-model="editData.role" required>
                                 <option value="anggota">Anggota (Mahasiswa)</option>
+                                <option value="sekretaris">Sekretaris</option>
                                 <option value="koordinator">Koordinator</option>
                                 <option value="dpl">DPL (Dosen)</option>
                             </select>
                         </div>
+                    </div>
+
+                    {{-- Existing Signature Preview --}}
+                    <div x-show="editData.signature" class="mt-2">
+                        <x-input-label value="Tanda Tangan Saat Ini" />
+                        <div class="mt-1 p-2 border border-slate-200 rounded-xl bg-slate-50 inline-block">
+                            <img :src="'/storage/' + editData.signature" class="h-16 object-contain" alt="Signature">
+                        </div>
+                    </div>
+
+                    {{-- Signature Canvas --}}
+                    <div class="mt-2">
+                        <x-input-label value="Ubah/Tambahkan Tanda Tangan" />
+                        <div class="relative w-full h-36 border border-slate-200 rounded-xl bg-slate-50 overflow-hidden mt-1">
+                            <canvas id="signatureCanvasEdit" class="w-full h-full cursor-crosshair touch-none"></canvas>
+                            <button type="button" id="clearSigBtnEdit" class="absolute bottom-2 right-2 px-2.5 py-1 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-[10px] font-bold rounded-lg transition shadow-sm">
+                                Hapus TTD
+                            </button>
+                        </div>
+                        <input type="hidden" name="signature" id="signatureInputEdit">
+                        <p class="text-[10px] text-slate-400 mt-1 font-semibold">Biarkan kosong jika tidak ingin mengubah tanda tangan yang sudah ada.</p>
                     </div>
                 </div>
 
@@ -452,6 +490,12 @@
                 openEditModal(data) {
                     this.editData = { ...data };
                     this.$dispatch('open-modal', 'modal-edit-user');
+                    document.getElementById('signatureInputEdit').value = '';
+                    const canvas = document.getElementById('signatureCanvasEdit');
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
                 },
 
                 confirmDelete(u) {
@@ -473,6 +517,120 @@
                     return colors[Math.abs(hash) % colors.length];
                 }
             };
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initSignaturePad('signatureCanvasAdd', 'signatureInputAdd', 'clearSigBtnAdd');
+            initSignaturePad('signatureCanvasEdit', 'signatureInputEdit', 'clearSigBtnEdit');
+        });
+
+        function initSignaturePad(canvasId, inputId, clearBtnId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const input = document.getElementById(inputId);
+            const clearBtn = document.getElementById(clearBtnId);
+
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    // Create temporary canvas to preserve contents
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = canvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(canvas, 0, 0);
+
+                    canvas.width = rect.width;
+                    canvas.height = rect.height;
+
+                    ctx.strokeStyle = '#1e293b'; // slate-800
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+
+                    ctx.drawImage(tempCanvas, 0, 0);
+                }
+            }
+
+            // Observe the parent container for dimension changes (perfect for modal display transitions)
+            const resizeObserver = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+                        resizeCanvas();
+                    }
+                }
+            });
+            resizeObserver.observe(canvas.parentElement);
+
+            window.addEventListener('resize', resizeCanvas);
+
+            let drawing = false;
+            let lastX = 0;
+            let lastY = 0;
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                let clientX = e.clientX;
+                let clientY = e.clientY;
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                }
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            }
+
+            function startDrawing(e) {
+                drawing = true;
+                const pos = getPos(e);
+                lastX = pos.x;
+                lastY = pos.y;
+                e.preventDefault();
+            }
+
+            function draw(e) {
+                if (!drawing) return;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                lastX = pos.x;
+                lastY = pos.y;
+                e.preventDefault();
+            }
+
+            function stopDrawing() {
+                if (!drawing) return;
+                drawing = false;
+                input.value = canvas.toDataURL('image/png');
+            }
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing);
+
+            clearBtn.addEventListener('click', () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                input.value = '';
+            });
+        }
+
+        function resetAddSignature() {
+            document.getElementById('signatureInputAdd').value = '';
+            const canvas = document.getElementById('signatureCanvasAdd');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
         }
     </script>
 </x-app-layout>

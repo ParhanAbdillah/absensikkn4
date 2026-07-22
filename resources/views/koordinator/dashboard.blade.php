@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-extrabold text-xl text-slate-800 tracking-tight">
-            Dashboard Koordinator
+            Dashboard {{ ucfirst(Auth::user()->role) }}
         </h2>
     </x-slot>
 

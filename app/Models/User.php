@@ -28,6 +28,7 @@ class User extends Authenticatable
         'nim',
         'phone',
         'avatar',
+        'signature',
         'is_active',
     ];
 
@@ -62,6 +63,11 @@ class User extends Authenticatable
         return $this->hasMany(Attendance::class);
     }
 
+    public function activityReports(): HasMany
+    {
+        return $this->hasMany(ActivityReport::class);
+    }
+
     public function approvedAttendances(): HasMany
     {
         return $this->hasMany(Attendance::class, 'approved_by');
@@ -80,5 +86,19 @@ class User extends Authenticatable
     public function isAnggota(): bool
     {
         return $this->role === 'anggota';
+    }
+
+    public function isSekretaris(): bool
+    {
+        return $this->role === 'sekretaris';
+    }
+
+    /**
+     * Scope query to include all 17 KKN members (Anggota, Sekretaris, and Koordinator student).
+     */
+    public function scopeMembers($query)
+    {
+        return $query->whereIn('role', ['anggota', 'sekretaris', 'koordinator'])
+                     ->where('name', '!=', 'Koordinator KKN');
     }
 }

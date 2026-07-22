@@ -13,10 +13,31 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Data anggota KKN (termasuk Koordinator)
+        $members = [
+            ['name' => 'NAUFAL QURROTA A\'YUN', 'nim' => '202406031', 'divisi' => 'Ketua', 'role' => 'koordinator'],
+            ['name' => 'DINI SRI RAHMA ALIA', 'nim' => '202401031', 'divisi' => 'Wakil Ketua', 'role' => 'anggota'],
+            ['name' => 'SOPHIE', 'nim' => '202401028', 'divisi' => 'Sekertaris I', 'role' => 'sekretaris'],
+            ['name' => 'TYARA DAMAYANTI', 'nim' => '202406039', 'divisi' => 'Sekertaris II', 'role' => 'sekretaris'],
+            ['name' => 'ATENA RENATIA', 'nim' => '202406013', 'divisi' => 'Bendahara I', 'role' => 'anggota'],
+            ['name' => 'HALWA AINUN HULIYAH', 'nim' => '202405027', 'divisi' => 'Bendahara II', 'role' => 'anggota'],
+            ['name' => 'RIKI MUHAMAD ROJALI', 'nim' => '202402017', 'divisi' => 'Humas I', 'role' => 'anggota'],
+            ['name' => 'MUHAMAD PARHAN ABDILLAH', 'nim' => '202402042', 'divisi' => 'Humas II', 'role' => 'anggota'],
+            ['name' => 'HEZA LUMAYA', 'nim' => '202406008', 'divisi' => 'Humas III', 'role' => 'anggota'],
+            ['name' => 'DINDA NOVIYANTI', 'nim' => '202406020', 'divisi' => 'Pendidikan I', 'role' => 'anggota'],
+            ['name' => 'FACHRUL IRWANDINATA', 'nim' => '202401064', 'divisi' => 'Pendidikan II', 'role' => 'anggota'],
+            ['name' => 'ESA PERMANA', 'nim' => '202402010', 'divisi' => 'Pendidikan III', 'role' => 'anggota'],
+            ['name' => 'RIANTY NUGROHO PUTRI', 'nim' => '202405011', 'divisi' => 'Pendidikan IV', 'role' => 'anggota'],
+            ['name' => 'TIAN DZIQRI FAUZAN', 'nim' => '202405023', 'divisi' => 'PDD I', 'role' => 'anggota'],
+            ['name' => 'AHMAD NANDA PUTRA ARIFIN', 'nim' => '202405005', 'divisi' => 'PDD II', 'role' => 'anggota'],
+            ['name' => 'PADLAN TAOPIKURROHAMAN', 'nim' => '202402028', 'divisi' => 'PDD III', 'role' => 'anggota'],
+            ['name' => 'ALDA NURSYABAN HIDAYAT', 'nim' => '202401030', 'divisi' => 'PDD IV', 'role' => 'anggota'],
+        ];
+
         // 1. Buat DPL (Dosen Pembimbing Lapangan)
         User::create([
             'name' => 'Dr. Budi Santoso, M.T.',
-            'email' => 'dpl@kkn.local',
+            'email' => 'dpl@kkn.local', // DPL tetap menggunakan email agar bisa dibedakan, atau bisa kosong jika perlu, tapi biarkan ada defaultnya
             'password' => Hash::make('password'),
             'role' => 'dpl',
             'nim' => '198503112010121003', // NIP Dosen
@@ -24,45 +45,28 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 2. Buat Koordinator (Ketua Kelompok KKN)
+        // 2. Buat Koordinator Tambahan (Sesuai Permintaan)
         User::create([
-            'name' => 'Faisal Rahman',
-            'email' => 'koordinator@kkn.local',
-            'password' => Hash::make('password'),
+            'name' => 'Koordinator KKN',
+            'email' => null,
+            'password' => Hash::make('202604'),
             'role' => 'koordinator',
-            'nim' => '2201010001',
-            'phone' => '082345678901',
+            'nim' => '202604',
+            'divisi' => 'Koordinator Tambahan',
+            'phone' => null,
             'is_active' => true,
         ]);
 
-        // 3. Buat 16 Anggota Kelompok Lainnya (Total Kelompok = 17 Orang termasuk Ketua)
-        $members = [
-            ['name' => 'Andi Wijaya', 'nim' => '2201010002'],
-            ['name' => 'Bambang Triyono', 'nim' => '2201010003'],
-            ['name' => 'Citra Lestari', 'nim' => '2201010004'],
-            ['name' => 'Dewi Anggraeni', 'nim' => '2201010005'],
-            ['name' => 'Eko Prasetyo', 'nim' => '2201010006'],
-            ['name' => 'Fitri Handayani', 'nim' => '2201010007'],
-            ['name' => 'Gilang Ramadhan', 'nim' => '2201010008'],
-            ['name' => 'Hendra Kurniawan', 'nim' => '2201010009'],
-            ['name' => 'Indah Permata', 'nim' => '2201010010'],
-            ['name' => 'Joko Susilo', 'nim' => '2201010011'],
-            ['name' => 'Kartika Sari', 'nim' => '2201010012'],
-            ['name' => 'Lukman Hakim', 'nim' => '2201010013'],
-            ['name' => 'Mega Utami', 'nim' => '2201010014'],
-            ['name' => 'Novianti', 'nim' => '2201010015'],
-            ['name' => 'Oki Setiawan', 'nim' => '2201010016'],
-            ['name' => 'Putri Wulandari', 'nim' => '2201010017'],
-        ];
-
-        foreach ($members as $index => $member) {
+        // 3. Buat Semua Anggota KKN
+        foreach ($members as $member) {
             User::create([
                 'name' => $member['name'],
-                'email' => "anggota" . ($index + 1) . "@kkn.local",
-                'password' => Hash::make('password'),
-                'role' => 'anggota',
+                'email' => null, // Email kosong
+                'password' => Hash::make($member['nim']), // Password pakai nim
+                'role' => $member['role'],
                 'nim' => $member['nim'],
-                'phone' => '0857123456' . sprintf('%02d', $index),
+                'divisi' => $member['divisi'],
+                'phone' => null,
                 'is_active' => true,
             ]);
         }
