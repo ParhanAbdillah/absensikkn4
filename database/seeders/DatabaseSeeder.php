@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'ATENA RENATIA', 'nim' => '202406013', 'divisi' => 'Bendahara I', 'role' => 'anggota'],
             ['name' => 'HALWA AINUN HULIYAH', 'nim' => '202405027', 'divisi' => 'Bendahara II', 'role' => 'anggota'],
             ['name' => 'RIKI MUHAMAD ROJALI', 'nim' => '202402017', 'divisi' => 'Humas I', 'role' => 'anggota'],
-            ['name' => 'MUHAMAD PARHAN ABDILLAH', 'nim' => '202402042', 'divisi' => 'Humas II', 'role' => 'anggota'],
+            ['name' => 'MUHAMAD PARHAN ABDILLAH', 'nim' => '202402047', 'divisi' => 'Humas II', 'role' => 'anggota'],
             ['name' => 'HEZA LUMAYA', 'nim' => '202406008', 'divisi' => 'Humas III', 'role' => 'anggota'],
             ['name' => 'DINDA NOVIYANTI', 'nim' => '202406020', 'divisi' => 'Pendidikan I', 'role' => 'anggota'],
             ['name' => 'FACHRUL IRWANDINATA', 'nim' => '202401064', 'divisi' => 'Pendidikan II', 'role' => 'anggota'],
