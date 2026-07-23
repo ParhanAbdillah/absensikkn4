@@ -72,5 +72,34 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ]);
         }
+
+        // 4. Buat Lokasi Default jika belum ada
+        $location = \App\Models\Location::firstOrCreate(
+            ['name' => 'Lokasi Posko KKN'],
+            [
+                'address' => 'Desa Sirnaraja',
+                'latitude' => -7.3274,
+                'longitude' => 108.2207,
+                'radius_meters' => 100,
+                'is_active' => true,
+            ]
+        );
+
+        // 5. Buat Absensi untuk Tanggal 20, 21, dan 22 Juli 2026
+        $dates = ['2026-07-20 08:00:00', '2026-07-21 08:00:00', '2026-07-22 08:00:00'];
+        $allUsers = User::whereIn('role', ['koordinator', 'sekretaris', 'anggota'])->get();
+
+        foreach ($dates as $dateTime) {
+            foreach ($allUsers as $u) {
+                \App\Models\Attendance::firstOrCreate([
+                    'user_id' => $u->id,
+                    'check_in_at' => $dateTime,
+                ], [
+                    'location_id' => $location->id,
+                    'status' => 'hadir',
+                    'notes' => 'Hadir KKN',
+                ]);
+            }
+        }
     }
 }
