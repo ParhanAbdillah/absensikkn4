@@ -35,28 +35,32 @@ class DatabaseSeeder extends Seeder
         ];
 
         // 1. Buat DPL (Dosen Pembimbing Lapangan)
-        User::create([
-            'name' => 'Dr. Budi Santoso, M.T.',
-            'email' => 'dpl@kkn.local', // DPL tetap menggunakan email agar bisa dibedakan, atau bisa kosong jika perlu, tapi biarkan ada defaultnya
-            'password' => Hash::make('password'),
-            'role' => 'dpl',
-            'nim' => '198503112010121003', // NIP Dosen
-            'phone' => '081234567890',
-            'is_active' => true,
-        ]);
+        User::updateOrCreate(
+            ['nim' => '198503112010121003'],
+            [
+                'name' => 'Dr. Budi Santoso, M.T.',
+                'email' => 'dpl@kkn.local',
+                'password' => Hash::make('password'),
+                'role' => 'dpl',
+                'phone' => '081234567890',
+                'is_active' => true,
+            ]
+        );
 
         // 2. Buat Koordinator Tambahan (Sesuai Permintaan)
-        User::create([
-            'name' => 'Koordinator KKN',
-            'email' => null,
-            'password' => Hash::make('202604'),
-            'role' => 'koordinator',
-            'nim' => '202604',
-            'divisi' => 'Koordinator Tambahan',
-            'class' => null,
-            'phone' => null,
-            'is_active' => true,
-        ]);
+        User::updateOrCreate(
+            ['nim' => '202604'],
+            [
+                'name' => 'Koordinator KKN',
+                'email' => null,
+                'password' => Hash::make('202604'),
+                'role' => 'koordinator',
+                'divisi' => 'Koordinator Tambahan',
+                'class' => null,
+                'phone' => null,
+                'is_active' => true,
+            ]
+        );
 
         // 3. Buat Semua Anggota KKN
         foreach ($members as $member) {
@@ -86,8 +90,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 5. Buat Absensi untuk Tanggal 20, 21, dan 22 Juli 2026
-        $dates = ['2026-07-20 08:00:00', '2026-07-21 08:00:00', '2026-07-22 08:00:00'];
+        // 5. Buat Absensi untuk Tanggal 20, 21, 22, dan 23 Juli 2026
+        $dates = ['2026-07-20 08:00:00', '2026-07-21 08:00:00', '2026-07-22 08:00:00', '2026-07-23 08:00:00'];
         $allUsers = User::whereIn('role', ['koordinator', 'sekretaris', 'anggota'])->get();
 
         foreach ($dates as $dateTime) {
