@@ -106,5 +106,23 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+
+        // 6. Otomatis hubungkan kembali file tanda tangan yang ada di folder storage/signatures ke user
+        $sigFiles = \Illuminate\Support\Facades\Storage::disk('public')->files('signatures');
+        // Filter only png/jpg files
+        $sigFiles = array_filter($sigFiles, function($f) {
+            return preg_match('/\.(png|jpg|jpeg)$/i', $f);
+        });
+        $sigFiles = array_values($sigFiles);
+
+        if (!empty($sigFiles)) {
+            foreach ($allUsers as $idx => $u) {
+                if (empty($u->signature)) {
+                    // Assign available signature file (cycle if fewer files than users)
+                    $sigToAssign = $sigFiles[$idx % count($sigFiles)];
+                    $u->update(['signature' => $sigToAssign]);
+                }
+            }
+        }
     }
 }
