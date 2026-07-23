@@ -92,7 +92,7 @@ class AttendanceController extends Controller
         }
 
         // Fetch all members (17 members including ketua & sekretaris)
-        $members = \App\Models\User::members()->orderBy('name', 'asc')->get();
+        $members = \App\Models\User::members()->orderBy('name', 'asc')->get()->unique('nim');
 
         // Create PHPWord instance
         $phpWord = new \PhpOffice\PhpWord\PhpWord();

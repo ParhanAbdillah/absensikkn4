@@ -60,17 +60,18 @@ class DatabaseSeeder extends Seeder
 
         // 3. Buat Semua Anggota KKN
         foreach ($members as $member) {
-            User::create([
-                'name' => $member['name'],
-                'email' => null, // Email kosong
-                'password' => Hash::make($member['nim']), // Password pakai nim
-                'role' => $member['role'],
-                'nim' => $member['nim'],
-                'divisi' => $member['divisi'],
-                'class' => $member['class'] ?? null,
-                'phone' => null,
-                'is_active' => true,
-            ]);
+            User::updateOrCreate(
+                ['nim' => $member['nim']],
+                [
+                    'name' => $member['name'],
+                    'email' => null,
+                    'password' => Hash::make($member['nim']),
+                    'role' => $member['role'],
+                    'divisi' => $member['divisi'],
+                    'class' => $member['class'] ?? null,
+                    'is_active' => true,
+                ]
+            );
         }
 
         // 4. Buat Lokasi Default jika belum ada
