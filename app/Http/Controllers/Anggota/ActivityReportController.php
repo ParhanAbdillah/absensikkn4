@@ -89,41 +89,40 @@ class ActivityReportController extends Controller
         // Clear the 6th week header (A41) since it's unused now
         $sheet->setCellValue('A41', '');
 
-        // 3. Populate data into corresponding week sections
+        // 3. Populate data into corresponding week sections dynamically
+        $rowOffset = 0;
+
         foreach ($weeks as $week) {
-            // Dynamically update the header text in the Excel sheet to show 2026
-            if (isset($week['header_cell']) && isset($week['header_text'])) {
-                $sheet->setCellValue($week['header_cell'], $week['header_text']);
-            }
+            $startRow = $week['start_row'] + $rowOffset;
+
+            // Dynamically update the header text in the Excel sheet
+            $sheet->setCellValue("A{$startRow}", $week['header_text']);
 
             $weekReports = $reports->filter(function ($r) use ($week) {
                 $d = Carbon::parse($r->tanggal);
                 return $d->between($week['start'], $week['end']);
             })->values();
 
-            // Each week has exactly 6 rows (1-5, and dst.)
-            for ($i = 0; $i < 6; $i++) {
-                $row = $week['start_row'] + $i;
+            $reportCount = $weekReports->count();
+
+            // If there are more reports than the template's default 6 rows per week, insert new rows
+            if ($reportCount > 6) {
+                $extraRows = $reportCount - 6;
+                $sheet->insertNewRowBefore($startRow + 6, $extraRows);
+                $rowOffset += $extraRows;
+            }
+
+            $totalRows = max(6, $reportCount);
+
+            for ($i = 0; $i < $totalRows; $i++) {
+                $row = $startRow + $i;
                 $report = $weekReports->get($i);
 
                 if ($report) {
+                    $sheet->setCellValue("B{$row}", $i + 1);
                     $sheet->setCellValue("C{$row}", $report->nama_kegiatan);
                     $sheet->setCellValue("D{$row}", Carbon::parse($report->deadline)->format('d/m/Y'));
-                    
-                    // Kolom E = Person In Charge (PIC - orang penanggung jawab)
                     $sheet->setCellValue("E{$row}", $report->person_in_charge ?? '-');
-
-                    // [NONAKTIF] PIC Dokumentasi (foto/URL) - dinonaktifkan, jangan hapus
-                    // if ($report->pic) {
-                    //     $picUrl = filter_var($report->pic, FILTER_VALIDATE_URL) ? $report->pic : url(Storage::url($report->pic));
-                    //     $sheet->setCellValue("E{$row}", $picUrl);
-                    //     $sheet->getCell("E{$row}")->getHyperlink()->setUrl($picUrl);
-                    //     $sheet->getStyle("E{$row}")->getFont()->getColor()->setRGB('0000FF');
-                    //     $sheet->getStyle("E{$row}")->getFont()->setUnderline(true);
-                    // } else {
-                    //     $sheet->setCellValue("E{$row}", '-');
-                    // }
-
                     $sheet->setCellValue("F{$row}", $report->status);
                     $sheet->setCellValue("G{$row}", $report->notes ?? '');
 
@@ -136,6 +135,17 @@ class ActivityReportController extends Controller
 
                     $sheet->getStyle("F{$row}")->getFill()->setFillType(Fill::FILL_SOLID);
                     $sheet->getStyle("F{$row}")->getFill()->getStartColor()->setRGB($statusColor);
+                } else {
+                    // Clear cell content if no report for this row
+                    if ($i >= 5) {
+                        $sheet->setCellValue("B{$row}", '');
+                    }
+                    $sheet->setCellValue("C{$row}", '');
+                    $sheet->setCellValue("D{$row}", '');
+                    $sheet->setCellValue("E{$row}", '');
+                    $sheet->setCellValue("F{$row}", '');
+                    $sheet->setCellValue("G{$row}", '');
+                    $sheet->getStyle("F{$row}")->getFill()->setFillType(Fill::FILL_NONE);
                 }
             }
         }
