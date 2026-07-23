@@ -118,10 +118,29 @@ class DatabaseSeeder extends Seeder
         if (!empty($sigFiles)) {
             foreach ($allUsers as $idx => $u) {
                 if (empty($u->signature)) {
-                    // Assign available signature file (cycle if fewer files than users)
                     $sigToAssign = $sigFiles[$idx % count($sigFiles)];
                     $u->update(['signature' => $sigToAssign]);
                 }
+            }
+        }
+
+        // 7. Otomatis kembalikan status pendaftaran wajah (FaceData) dari file yang ada di folder storage/faces
+        $faceFiles = \Illuminate\Support\Facades\Storage::disk('public')->files('faces');
+        $faceFiles = array_values(array_filter($faceFiles, function($f) {
+            return preg_match('/\.(png|jpg|jpeg)$/i', $f);
+        }));
+
+        foreach ($allUsers as $idx => $u) {
+            $existingFace = \App\Models\FaceData::where('user_id', $u->id)->first();
+            if (!$existingFace) {
+                // Pilih foto wajah yang tersedia jika ada, atau gunakan default
+                $photoPath = !empty($faceFiles) ? $faceFiles[$idx % count($faceFiles)] : null;
+                
+                \App\Models\FaceData::create([
+                    'user_id' => $u->id,
+                    'reference_photo' => $photoPath,
+                    'descriptor' => array_fill(0, 128, 0.05), // Descriptor default agar terdaftar
+                ]);
             }
         }
     }
