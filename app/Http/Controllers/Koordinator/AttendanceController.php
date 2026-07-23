@@ -389,9 +389,9 @@ class AttendanceController extends Controller
                     $isHadir = in_array($member->id, $attendancesByDate[$dateStr]);
                     
                     $cell = $table->addCell($dayColWidth, ['valign' => 'center']);
-                    if ($isHadir && $member->signature) {
-                        $sigPath = storage_path('app/public/' . $member->signature);
-                        if (file_exists($sigPath)) {
+                    if ($isHadir) {
+                        $sigPath = $member->signature ? storage_path('app/public/' . $member->signature) : null;
+                        if ($sigPath && file_exists($sigPath)) {
                             $cell->addImage($sigPath, ['width' => 25, 'height' => 12, 'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
                         } else {
                             $cell->addText('V', $bF, ['alignment' => $jcCenter] + $bP);
