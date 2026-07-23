@@ -43,7 +43,7 @@
                                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"></path></svg>
                             </div>
                             <input x-model="search" @input="currentPage = 1" type="text"
-                                   placeholder="Cari nama, NIM, email, divisi..."
+                                   placeholder="Cari nama, NIM, email, divisi, kelas..."
                                    class="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none w-64 transition">
                         </div>
 
@@ -99,6 +99,15 @@
                                     </button>
                                 </th>
                                 <th class="px-5 py-3.5 text-left">
+                                    <button @click="sortBy('class')" class="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider hover:text-emerald-600 transition group">
+                                        Kelas
+                                        <div class="flex flex-col items-center">
+                                            <svg class="w-2 h-2" :class="sortCol === 'class' && sortDir === 'asc' ? 'text-emerald-600' : 'text-slate-300 group-hover:text-slate-400'" fill="currentColor" viewBox="0 0 320 512"><path d="M182.6 137.4c-12.5-12.5-32.8-12.5-45.3 0l-128 128c-9.2 9.2-11.9 22.9-6.9 34.9s16.6 19.8 29.6 19.8H288c12.9 0 24.6-7.8 29.6-19.8s2.2-25.7-6.9-34.9l-128-128z"/></svg>
+                                            <svg class="w-2 h-2 mt-0.5" :class="sortCol === 'class' && sortDir === 'desc' ? 'text-emerald-600' : 'text-slate-300 group-hover:text-slate-400'" fill="currentColor" viewBox="0 0 320 512"><path d="M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z"/></svg>
+                                        </div>
+                                    </button>
+                                </th>
+                                <th class="px-5 py-3.5 text-left">
                                     <button @click="sortBy('email')" class="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider hover:text-emerald-600 transition group">
                                         Email
                                         <div class="flex flex-col items-center">
@@ -140,6 +149,8 @@
                                     <td class="px-5 py-3.5 font-mono text-xs text-slate-500" x-text="u.nim || '—'"></td>
                                     {{-- Divisi --}}
                                     <td class="px-5 py-3.5 text-sm font-semibold text-slate-600" x-text="u.divisi || '—'"></td>
+                                    {{-- Kelas --}}
+                                    <td class="px-5 py-3.5 text-sm font-semibold text-slate-600" x-text="u.class || '—'"></td>
                                     {{-- Email --}}
                                     <td class="px-5 py-3.5">
                                         <span class="text-sm text-slate-600" x-text="u.email"></span>
@@ -266,6 +277,10 @@
                             <x-input-label for="divisi" value="Divisi" />
                             <x-text-input id="divisi" class="block mt-1 w-full" type="text" name="divisi" placeholder="Contoh: Humas" />
                         </div>
+                        <div>
+                            <x-input-label for="class" value="Kelas (Jurusan)" />
+                            <x-text-input id="class" class="block mt-1 w-full" type="text" name="class" placeholder="Contoh: MKP" />
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -349,6 +364,10 @@
                             <x-input-label for="edit_divisi" value="Divisi" />
                             <x-text-input id="edit_divisi" class="block mt-1 w-full" type="text" name="divisi" x-model="editData.divisi" />
                         </div>
+                        <div>
+                            <x-input-label for="edit_class" value="Kelas (Jurusan)" />
+                            <x-text-input id="edit_class" class="block mt-1 w-full" type="text" name="class" x-model="editData.class" />
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -424,7 +443,7 @@
                 sortDir: 'asc',
                 perPage: 10,
                 currentPage: 1,
-                editData: { id: '', name: '', email: '', nim: '', phone: '', role: 'anggota', divisi: '' },
+                editData: { id: '', name: '', email: '', nim: '', phone: '', role: 'anggota', divisi: '', class: '' },
 
                 get filteredUsers() {
                     let data = this.allUsers.filter(u => {
@@ -434,7 +453,8 @@
                             (u.nim  && u.nim.toLowerCase().includes(q))  ||
                             (u.email && u.email.toLowerCase().includes(q)) ||
                             (u.phone && u.phone.toLowerCase().includes(q)) ||
-                            (u.divisi && u.divisi.toLowerCase().includes(q));
+                            (u.divisi && u.divisi.toLowerCase().includes(q)) ||
+                            (u.class && u.class.toLowerCase().includes(q));
                         const matchRole = !this.filterRole || u.role === this.filterRole;
                         return matchSearch && matchRole;
                     });
