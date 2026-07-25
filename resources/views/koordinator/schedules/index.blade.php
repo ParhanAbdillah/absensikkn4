@@ -56,8 +56,16 @@
                                                     <span class="text-slate-400 text-xs">Tepat Waktu</span>
                                                 @endif
                                             </td>
-                                            <td class="px-6 py-4 text-center">
-                                                <button @click="openEditModal({{ json_encode($schedule) }})" class="text-emerald-600 hover:text-emerald-900 font-bold mr-4 text-xs uppercase tracking-wide">Edit</button>
+                                            <td class="px-6 py-4 text-center whitespace-nowrap">
+                                                <form action="{{ route('koordinator.schedules.send-reminder', $schedule) }}" method="POST" class="inline-block mr-2" onsubmit="return confirm('Kirim notifikasi WhatsApp pengingat absensi ke anggota yang belum absen?')">
+                                                    @csrf
+                                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs rounded-lg transition" title="Kirim Pengingat WhatsApp ke Anggota yang Belum Absen">
+                                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                                                        Remind WA
+                                                    </button>
+                                                </form>
+
+                                                <button @click="openEditModal({{ json_encode($schedule) }})" class="text-emerald-600 hover:text-emerald-900 font-bold mr-3 text-xs uppercase tracking-wide">Edit</button>
                                                 
                                                 <form action="{{ route('koordinator.schedules.destroy', $schedule) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?')">
                                                     @csrf

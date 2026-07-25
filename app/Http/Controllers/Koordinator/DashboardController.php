@@ -52,24 +52,14 @@ class DashboardController extends Controller
         ));
     }
 
-    public function sendReminder(Schedule $schedule)
+    public function sendReminder(Schedule $schedule, \App\Services\FonnteService $fonnteService)
     {
-        $today = Carbon::today();
-        $members = User::members()->where('is_active', true)->get();
-        $sentCount = 0;
+        $result = $fonnteService->sendScheduleReminder($schedule);
 
-        foreach ($members as $member) {
-            $hasAttended = Attendance::where('user_id', $member->id)
-                ->where('schedule_id', $schedule->id)
-                ->exists();
-
-            if (!$hasAttended && $member->phone) {
-                \Illuminate\Support\Facades\Artisan::call('attendance:send-reminder');
-                $sentCount++;
-                break;
-            }
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message']);
         }
 
-        return redirect()->back()->with('success', 'Pengingat WhatsApp berhasil dikirim ke anggota kelompok yang belum absen.');
+        return redirect()->back()->with('success', $result['message']);
     }
 }
