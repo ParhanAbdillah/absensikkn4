@@ -226,7 +226,7 @@ class FonnteService
                  . "🔔 *{$titleHeader}*\n"
                  . "{$bodyText}\n\n"
                  . "{$kegiatanInfo}"
-                 . "👉 https://siabsensikkn.online\n\n"
+                 . "👉 https://siabsensikkkn.online\n\n"
                  . "Terima kasih.";
 
         try {
@@ -269,7 +269,7 @@ class FonnteService
                  . "📌 *Kegiatan:* {$schedule->title}\n"
                  . "🕒 *Waktu Mulai:* {$startTime} WIB\n"
                  . "📍 *Lokasi:* {$locationName}\n\n"
-                 . "👉 https://siabsensikkn.online\n\n"
+                 . "👉 https://siabsensikkkn.online\n\n"
                  . "Terima kasih.";
 
         try {
