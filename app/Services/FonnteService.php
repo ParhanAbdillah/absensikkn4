@@ -223,11 +223,9 @@ class FonnteService
         }
 
         $message = "Halo *{$user->name}*,\n\n"
-                 . "🔔 *{$titleHeader}*\n\n"
+                 . "🔔 *{$titleHeader}*\n"
                  . "{$bodyText}\n\n"
                  . "{$kegiatanInfo}"
-                 . "Silakan buka link berikut dari HP Anda untuk melakukan absensi (Wajah & GPS):\n"
-                 . "👉 {$appUrl}\n\n"
                  . "Terima kasih.";
 
         try {
@@ -264,15 +262,12 @@ class FonnteService
 
         $startTime = Carbon::parse($schedule->start_time)->format('H:i');
         $locationName = $schedule->location ? $schedule->location->name : 'Posko KKN';
-        $appUrl = config('app.url', url('/'));
 
         $message = "Halo *{$user->name}*,\n\n"
-                 . "Diingatkan untuk segera melakukan *Absensi Kehadiran* KKN:\n\n"
+                 . "Diingatkan untuk segera melakukan *Absensi Kehadiran KKN*:\n"
                  . "📌 *Kegiatan:* {$schedule->title}\n"
                  . "🕒 *Waktu Mulai:* {$startTime} WIB\n"
                  . "📍 *Lokasi:* {$locationName}\n\n"
-                 . "Silakan buka link berikut dari HP Anda untuk melakukan absensi (Wajah & GPS):\n"
-                 . "👉 {$appUrl}\n\n"
                  . "Terima kasih.";
 
         try {
