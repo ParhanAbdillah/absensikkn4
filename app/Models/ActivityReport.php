@@ -18,8 +18,8 @@ class ActivityReport extends Model
     ];
 
     protected $casts = [
-        'tanggal' => 'date',
-        'deadline' => 'date',
+        'tanggal' => 'date:Y-m-d',
+        'deadline' => 'date:Y-m-d',
     ];
 
     public function user()

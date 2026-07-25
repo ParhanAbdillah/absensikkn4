@@ -12,7 +12,7 @@ class LeaveRequest extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
         'reviewed_at' => 'datetime',
     ];
 
