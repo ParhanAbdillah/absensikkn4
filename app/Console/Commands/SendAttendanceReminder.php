@@ -3,9 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\Schedule;
 use App\Services\FonnteService;
-use Carbon\Carbon;
 
 class SendAttendanceReminder extends Command
 {
@@ -14,7 +12,7 @@ class SendAttendanceReminder extends Command
      *
      * @var string
      */
-    protected $signature = 'attendance:send-reminder';
+    protected $signature = 'attendance:send-reminder {session? : Sesi pengingat (pagi, siang, sore)}';
 
     /**
      * The console command description.
@@ -28,24 +26,18 @@ class SendAttendanceReminder extends Command
      */
     public function handle(FonnteService $fonnteService)
     {
-        $today = Carbon::today();
+        $session = $this->argument('session');
 
-        $schedules = Schedule::whereDate('activity_date', $today)
-            ->where('is_active', true)
-            ->get();
+        $this->info("Memproses pengingat WhatsApp harian" . ($session ? " (Sesi {$session})" : "") . "...");
 
-        if ($schedules->isEmpty()) {
-            $this->info('Tidak ada jadwal kegiatan aktif untuk hari ini.');
-            return;
-        }
+        $result = $fonnteService->sendDailyAttendanceReminder($session);
 
-        foreach ($schedules as $schedule) {
-            $this->info("Memproses pengingat WhatsApp untuk jadwal: {$schedule->title}");
-            $result = $fonnteService->sendScheduleReminder($schedule);
+        if ($result['success']) {
             $this->info($result['message']);
+        } else {
+            $this->error($result['message']);
         }
-
-        $this->info('Proses pengiriman pengingat WhatsApp selesai.');
     }
 }
+
 

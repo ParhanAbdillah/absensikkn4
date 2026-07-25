@@ -35,3 +35,9 @@ Artisan::command('drive:test', function (\App\Services\GoogleDriveService $drive
         $this->error('Upload Failed. Check logs in storage/logs/laravel.log for details.');
     }
 })->purpose('Test Google Drive API integration');
+
+// Schedule WhatsApp reminders for daily attendance (08:00, 12:00, and 17:00 WIB)
+\Illuminate\Support\Facades\Schedule::command('attendance:send-reminder pagi')->dailyAt('08:00')->timezone('Asia/Jakarta');
+\Illuminate\Support\Facades\Schedule::command('attendance:send-reminder siang')->dailyAt('12:00')->timezone('Asia/Jakarta');
+\Illuminate\Support\Facades\Schedule::command('attendance:send-reminder sore')->dailyAt('17:00')->timezone('Asia/Jakarta');
+
