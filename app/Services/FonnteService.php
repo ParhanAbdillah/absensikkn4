@@ -212,14 +212,14 @@ class FonnteService
         $kegiatanInfo = $schedule ? "📌 *Kegiatan:* {$schedule->title}\n" : '';
 
         if ($session === 'pagi') {
-            $titleHeader = "PENGINGAT ABSENSI PAGI (08:00 WIB)";
+            $titleHeader = "PENGINGAT ABSENSI KKN";
             $bodyText = "Diingatkan untuk segera melakukan *Absensi Kehadiran KKN* hari ini.";
         } elseif ($session === 'siang') {
-            $titleHeader = "PENGINGAT ABSENSI SIANG (12:00 WIB)";
-            $bodyText = "Saat ini sudah pukul 12:00 WIB dan Anda *belum mencatatkan absensi* KKN hari ini. Mohon segera melakukan presensi.";
+            $titleHeader = "PENGINGAT ABSENSI KKN (Pukul 12:00 WIB)";
+            $bodyText = "Saat ini pukul 12:00 WIB dan Anda *belum melakukan absensi* KKN hari ini. Mohon segera melakukan presensi.";
         } else {
-            $titleHeader = "⚠️ PERINGATAN ABSENSI SORE (17:00 WIB)";
-            $bodyText = "Hari ini (pukul 17:00 WIB) Anda *masih belum melakukan absensi* KKN. Segera lakukan presensi kehadiran sebelum sistem ditutup!";
+            $titleHeader = "⚠️ PERINGATAN TERAKHIR ABSENSI KKN";
+            $bodyText = "Hari ini (pukul 17:00 WIB) Anda *masih belum melakukan absensi* KKN. Segera lakukan presensi kehadiran sebelum hari berakhir!";
         }
 
         $message = "Halo *{$user->name}*,\n\n"
