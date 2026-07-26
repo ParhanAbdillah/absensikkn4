@@ -139,6 +139,18 @@
                     Dashboard Utama
                 </a>
 
+                <a href="{{ route('finance.index') }}"
+                    class="flex items-center gap-4 px-4 py-2.5 rounded-full transition font-medium text-sm {{ request()->routeIs('finance.*') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-100 text-slate-600' }}">
+                    <svg class="w-5 h-5 text-slate-500 {{ request()->routeIs('finance.*') ? 'text-emerald-600' : '' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    Buku Kas & Keuangan
+                </a>
+
+
                 @if (Auth::user()->isKoordinator() || Auth::user()->isSekretaris() || Auth::user()->isDpl())
                     <div class="pt-4 pb-1.5 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         PENGELOLAAN</div>
@@ -296,7 +308,77 @@
         <div
             class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex justify-between items-center px-2 py-3 relative">
 
-            @if (Auth::user()->isAnggota())
+            @if (Auth::user()->isBendahara())
+                <!-- Left Side (Bendahara Mobile Nav) -->
+                <div class="flex-1 flex justify-around items-center">
+                    <!-- Home -->
+                    <a href="{{ route('dashboard') }}"
+                        class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('dashboard') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-5 h-5" fill="{{ request()->routeIs('dashboard') ? 'currentColor' : 'none' }}"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                            </path>
+                        </svg>
+                        <span class="text-[9px]">Home</span>
+                    </a>
+
+                    <!-- Buku Kas -->
+                    <a href="{{ route('finance.index') }}"
+                        class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('finance.index') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                            </path>
+                        </svg>
+                        <span class="text-[9px]">Buku Kas</span>
+                    </a>
+                </div>
+
+                <!-- Center Floating Button (Scanner) -->
+                <div class="absolute left-1/2 -translate-x-1/2 -top-6 z-10">
+                    <a href="{{ Auth::user()->faceData ? route('anggota.attendance.index') : route('anggota.face.register') }}"
+                        class="flex items-center justify-center w-16 h-16 bg-emerald-600 rounded-full text-white shadow-lg border-[6px] border-[#f8fafc] transition transform active:scale-95"
+                        title="Scan Absen">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </a>
+                </div>
+
+                <!-- Center Spacer -->
+                <div class="w-14 flex-shrink-0"></div>
+
+                <!-- Right Side (Bendahara: Laporan Kegiatan, Profil) -->
+                <div class="flex-1 flex justify-around items-center">
+                    <!-- Laporan Kegiatan Harian (Daily Log / To-Do List) -->
+                    <a href="{{ route('anggota.reports.index') }}"
+                        class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('anggota.reports.*') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                            </path>
+                        </svg>
+                        <span class="text-[9px]">Kegiatan</span>
+                    </a>
+
+                    <!-- Profile -->
+                    <a href="{{ route('profile.edit') }}"
+                        class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('profile.edit') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
+                        <svg class="w-5 h-5"
+                            fill="{{ request()->routeIs('profile.edit') ? 'currentColor' : 'none' }}"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <span class="text-[9px]">Profil</span>
+                    </a>
+                </div>
+            @elseif (Auth::user()->isAnggota())
                 <!-- Left Side -->
                 <div class="flex-1 flex justify-around items-center">
                     <!-- Home -->

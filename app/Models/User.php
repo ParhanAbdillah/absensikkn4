@@ -93,6 +93,12 @@ class User extends Authenticatable
         return $this->role === 'sekretaris';
     }
 
+    public function isBendahara(): bool
+    {
+        return $this->role === 'bendahara' || str_contains(strtolower($this->divisi ?? ''), 'bendahara');
+    }
+
+
     /**
      * Scope query to include all 17 KKN members (Anggota, Sekretaris, and Koordinator student).
      */

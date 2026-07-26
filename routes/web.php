@@ -88,4 +88,23 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Finance/Buku Kas Routes
+Route::middleware(['auth'])->prefix('finance')->name('finance.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Bendahara\FinanceController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\Bendahara\FinanceController::class, 'store'])->name('store');
+    Route::delete('/{transaction}', [\App\Http\Controllers\Bendahara\FinanceController::class, 'destroy'])->name('destroy');
+    Route::get('/export', [\App\Http\Controllers\Bendahara\FinanceController::class, 'export'])->name('export');
+
+    // Activities Financial Ledger Routes
+    Route::prefix('activities')->name('activities.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Bendahara\ActivityFinancialReportController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Bendahara\ActivityFinancialReportController::class, 'store'])->name('store');
+        Route::get('/{report}', [\App\Http\Controllers\Bendahara\ActivityFinancialReportController::class, 'show'])->name('show');
+        Route::delete('/{report}', [\App\Http\Controllers\Bendahara\ActivityFinancialReportController::class, 'destroy'])->name('destroy');
+        Route::post('/{report}/items', [\App\Http\Controllers\Bendahara\ActivityFinancialReportController::class, 'storeItem'])->name('items.store');
+        Route::delete('/items/{item}', [\App\Http\Controllers\Bendahara\ActivityFinancialReportController::class, 'destroyItem'])->name('items.destroy');
+        Route::get('/{report}/export', [\App\Http\Controllers\Bendahara\ActivityFinancialReportController::class, 'export'])->name('export');
+    });
+});
+
 require __DIR__.'/auth.php';
