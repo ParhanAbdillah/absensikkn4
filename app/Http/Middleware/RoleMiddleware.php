@@ -24,8 +24,13 @@ class RoleMiddleware
         $user = Auth::user();
 
         // Jika user memiliki role yang sesuai dengan salah satu parameter $roles
-        if (in_array($user->role, $roles)) {
-            return $next($request);
+        foreach ($roles as $role) {
+            if ($role === 'bendahara' && $user->isBendahara()) {
+                return $next($request);
+            }
+            if ($user->role === $role) {
+                return $next($request);
+            }
         }
 
         // Jika tidak berhak, return error 403 Forbidden

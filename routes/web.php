@@ -33,6 +33,7 @@ Route::middleware(['auth', 'role:koordinator,sekretaris,dpl'])->prefix('koordina
 
     // Routes accessible by Koordinator and Sekretaris only
     Route::middleware(['role:koordinator,sekretaris'])->group(function () {
+        Route::post('/attendance/manual', [\App\Http\Controllers\Koordinator\AttendanceController::class, 'manualStore'])->name('attendance.manual');
         Route::get('/dashboard', [\App\Http\Controllers\Koordinator\DashboardController::class, 'index'])->name('dashboard');
         Route::post('/schedules/{schedule}/send-reminder', [\App\Http\Controllers\Koordinator\DashboardController::class, 'sendReminder'])->name('schedules.send-reminder');
         Route::resource('schedules', \App\Http\Controllers\Koordinator\ScheduleController::class);
@@ -89,7 +90,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Finance/Buku Kas Routes
-Route::middleware(['auth'])->prefix('finance')->name('finance.')->group(function () {
+Route::middleware(['auth', 'role:bendahara'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Bendahara\FinanceController::class, 'index'])->name('index');
     Route::post('/', [\App\Http\Controllers\Bendahara\FinanceController::class, 'store'])->name('store');
     Route::delete('/{transaction}', [\App\Http\Controllers\Bendahara\FinanceController::class, 'destroy'])->name('destroy');
@@ -105,6 +106,18 @@ Route::middleware(['auth'])->prefix('finance')->name('finance.')->group(function
         Route::delete('/items/{item}', [\App\Http\Controllers\Bendahara\ActivityFinancialReportController::class, 'destroyItem'])->name('items.destroy');
         Route::get('/{report}/export', [\App\Http\Controllers\Bendahara\ActivityFinancialReportController::class, 'export'])->name('export');
     });
+});
+
+Route::get('/migrate-db', function () {
+    if (auth()->check() && (auth()->user()->isKoordinator() || auth()->user()->isSekretaris() || auth()->user()->isBendahara())) {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            return 'Migration successful:<br><pre>' . \Illuminate\Support\Facades\Artisan::output() . '</pre>';
+        } catch (\Exception $e) {
+            return 'Error: ' . $e->getMessage();
+        }
+    }
+    abort(403);
 });
 
 require __DIR__.'/auth.php';

@@ -139,6 +139,7 @@
                     Dashboard Utama
                 </a>
 
+                @if (Auth::user()->isBendahara())
                 <a href="{{ route('finance.index') }}"
                     class="flex items-center gap-4 px-4 py-2.5 rounded-full transition font-medium text-sm {{ request()->routeIs('finance.*') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-100 text-slate-600' }}">
                     <svg class="w-5 h-5 text-slate-500 {{ request()->routeIs('finance.*') ? 'text-emerald-600' : '' }}"
@@ -149,6 +150,7 @@
                     </svg>
                     Buku Kas & Keuangan
                 </a>
+                @endif
 
 
                 @if (Auth::user()->isKoordinator() || Auth::user()->isSekretaris() || Auth::user()->isDpl())
