@@ -273,26 +273,11 @@ class AttendanceController extends Controller
                     $cell1 = $table->addCell(1437, ['valign' => 'top', 'vMerge' => 'restart']);
                     $cell2 = $table->addCell(1438, ['valign' => 'top', 'vMerge' => 'restart']);
 
-                    if ($hasAttended && $member->signature) {
-                        $sigPath = storage_path('app/public/' . $member->signature);
-                        file_exists($sigPath)
-                            ? $cell1->addImage($sigPath, ['width' => 50, 'height' => 25])
-                            : $cell1->addText($num . '.', $bF, $bP);
-                    } else {
-                        $cell1->addText($num . '.', $bF, $bP);
-                    }
+                    $cell1->addText($num . '.', $bF, $bP);
 
                     $nextMember = $members->get($i + 1);
                     if ($nextMember) {
-                        $hasNextAttended = $attendances->has($nextMember->id);
-                        if ($hasNextAttended && $nextMember->signature) {
-                            $nextSigPath = storage_path('app/public/' . $nextMember->signature);
-                            file_exists($nextSigPath)
-                                ? $cell2->addImage($nextSigPath, ['width' => 50, 'height' => 25])
-                                : $cell2->addText(($num + 1) . '.', $bF, $bP);
-                        } else {
-                            $cell2->addText(($num + 1) . '.', $bF, $bP);
-                        }
+                        $cell2->addText(($num + 1) . '.', $bF, $bP);
                     } else {
                         $cell2->addText('', $bF, $bP);
                     }
