@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Dpl;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityReport;
 use App\Models\Attendance;
-use App\Models\Location;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -17,36 +16,29 @@ class DashboardController extends Controller
         $today = Carbon::today();
 
         $totalMembers    = User::members()->count();
-        $totalLocations  = Location::count();
-
         $hadirCount      = Attendance::whereDate('check_in_at', $today)->count();
         $hadirPersentase = $totalMembers > 0 ? round(($hadirCount / $totalMembers) * 100) : 0;
 
-        // Data 7 hari terakhir untuk grafik
-        $weeklyData = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
-            $weeklyData[] = [
-                'label' => $date->isoFormat('ddd'),
-                'count' => Attendance::whereDate('check_in_at', $date)->count(),
-                'date'  => $date->toDateString(),
-            ];
-        }
-
-        // Ringkasan laporan kegiatan
-        $totalReports    = ActivityReport::count();
         $doneReports     = ActivityReport::where('status', 'Done')->count();
-        $pendingReports  = ActivityReport::where('status', '!=', 'Done')->count();
+
+        // Kegiatan mendekati deadline (belum selesai, deadline <= 3 hari ke depan)
+        $nearDeadlineReports = ActivityReport::where('status', '!=', 'Done')
+            ->whereDate('deadline', '>=', now()->toDateString())
+            ->whereDate('deadline', '<=', now()->addDays(3)->toDateString())
+            ->count();
+
+        // Kegiatan sudah lewat deadline
+        $overdueReports = ActivityReport::where('status', '!=', 'Done')
+            ->whereDate('deadline', '<', now()->toDateString())
+            ->count();
 
         return view('dpl.dashboard', compact(
             'totalMembers',
-            'totalLocations',
             'hadirCount',
             'hadirPersentase',
-            'weeklyData',
-            'totalReports',
             'doneReports',
-            'pendingReports'
+            'nearDeadlineReports',
+            'overdueReports'
         ));
     }
 

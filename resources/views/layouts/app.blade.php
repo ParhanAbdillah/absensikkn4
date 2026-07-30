@@ -695,79 +695,40 @@
                     </a>
                 </div>
             @else
-                <!-- DPL Mobile Nav: Home | Rekap (dropdown) | Profil -->
-                <!-- Left: Home -->
-                <div class="flex-1 flex justify-around items-center">
-                    <a href="{{ route('dashboard') }}"
-                        class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('dpl.dashboard') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
-                        <svg class="w-6 h-6" fill="{{ request()->routeIs('dpl.dashboard') ? 'currentColor' : 'none' }}"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-                            </path>
-                        </svg>
-                        <span class="text-[10px]">Home</span>
-                    </a>
+                <!-- DPL Mobile Nav: Home | Rekap Absensi | Rekap Laporan | Profil -->
+                <a href="{{ route('dashboard') }}"
+                    class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('dpl.dashboard') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
+                    <svg class="w-5 h-5" fill="{{ request()->routeIs('dpl.dashboard') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span class="text-[9px]">Home</span>
+                </a>
 
-                    <!-- Rekap Dropdown -->
-                    <div x-data="{ rekapOpen: false }" class="relative flex flex-col items-center">
-                        <div x-show="rekapOpen"
-                             @click.away="rekapOpen = false"
-                             x-transition:enter="transition ease-out duration-150"
-                             x-transition:enter-start="opacity-0 -translate-y-2"
-                             x-transition:enter-end="opacity-100 translate-y-0"
-                             x-transition:leave="transition ease-in duration-100"
-                             x-transition:leave-start="opacity-100 translate-y-0"
-                             x-transition:leave-end="opacity-0 -translate-y-2"
-                             class="absolute bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 min-w-[160px]"
-                             style="display:none; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);"
-                        >
-                            <a href="{{ route('koordinator.attendance.rekap') }}"
-                               class="flex items-center gap-2.5 px-4 py-3 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-600 transition border-b border-slate-100">
-                                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                </svg>
-                                Rekap Absensi
-                            </a>
-                            <a href="{{ route('koordinator.reports.index') }}"
-                               class="flex items-center gap-2.5 px-4 py-3 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition">
-                                <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                </svg>
-                                Rekap Laporan
-                            </a>
-                        </div>
+                <a href="{{ route('koordinator.attendance.rekap') }}"
+                    class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('koordinator.attendance.rekap') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="text-[9px]">Absensi</span>
+                </a>
 
-                        <button @click="rekapOpen = !rekapOpen"
-                            class="flex flex-col items-center gap-1 w-12 {{ (request()->routeIs('koordinator.attendance.rekap') || request()->routeIs('koordinator.reports.*')) ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            <span class="text-[10px]">Rekap</span>
-                        </button>
-                    </div>
-                </div>
+                <a href="{{ route('koordinator.reports.index') }}"
+                    class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('koordinator.reports.*') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="text-[9px]">Laporan</span>
+                </a>
 
-                {{-- Tidak ada tombol scanner untuk DPL --}}
-                <div class="w-4 flex-shrink-0"></div>
-
-                <!-- Right: Profil -->
-                <div class="flex-1 flex justify-around items-center">
-                    <a href="{{ route('profile.edit') }}"
-                        class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('profile.edit') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
-                        <svg class="w-6 h-6"
-                            fill="{{ request()->routeIs('profile.edit') ? 'currentColor' : 'none' }}"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                        <span class="text-[10px]">Profil</span>
-                    </a>
-                </div>
+                <a href="{{ route('profile.edit') }}"
+                    class="flex flex-col items-center gap-1 w-12 {{ request()->routeIs('profile.edit') ? 'text-emerald-600 font-bold' : 'text-slate-400' }}">
+                    <svg class="w-5 h-5" fill="{{ request()->routeIs('profile.edit') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span class="text-[9px]">Profil</span>
+                </a>
             @endif
+
         </div>
     </div>
 
