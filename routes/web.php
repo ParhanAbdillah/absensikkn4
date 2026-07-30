@@ -30,6 +30,8 @@ Route::middleware(['auth', 'role:koordinator,sekretaris,dpl'])->prefix('koordina
     Route::get('/attendance/rekap/print', [\App\Http\Controllers\Koordinator\AttendanceController::class, 'print'])->name('attendance.rekap.print');
     Route::get('/attendance/rekap/export-word', [\App\Http\Controllers\Koordinator\AttendanceController::class, 'exportWord'])->name('attendance.rekap.export-word');
     Route::get('/reports', [\App\Http\Controllers\Koordinator\ActivityReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/{user}', [\App\Http\Controllers\Koordinator\ActivityReportController::class, 'show'])->name('reports.show');
+
 
     // Routes accessible by Koordinator and Sekretaris only
     Route::middleware(['role:koordinator,sekretaris'])->group(function () {
