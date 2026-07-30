@@ -58,7 +58,7 @@
                                             <div class="text-xs text-slate-400 font-semibold uppercase">NIM: {{ $attendance->user->nim }}</div>
                                         </td>
                                         <td class="px-6 py-4 font-semibold text-slate-600">
-                                            {{ $attendance->schedule->title }}
+                                            {{ optional($attendance->schedule)->title ?? 'Kegiatan Harian' }}
                                         </td>
                                         <td class="px-6 py-4 text-slate-500">
                                             {{ $attendance->check_in_at->format('d-m-Y H:i') }} WIB
