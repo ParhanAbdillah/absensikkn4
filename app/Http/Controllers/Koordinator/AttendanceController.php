@@ -294,8 +294,6 @@ class AttendanceController extends Controller
                         } else {
                             $cell2->addText(($num + 1) . '.', $bF, $bP);
                         }
-                    } else {
-                        $cell2->addText('', $bF, $bP);
                     }
                 } else {
                     // Even row
@@ -409,5 +407,60 @@ class AttendanceController extends Controller
         $writer->save($tempFile);
 
         return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
+    }
+
+    public function manualStore(Request $request)
+    {
+        if (!auth()->user()->isSekretaris() && !auth()->user()->isKoordinator()) {
+            abort(403, 'Hanya Sekretaris atau Koordinator yang dapat melakukan absensi manual.');
+        }
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'date' => 'required|date|before_or_equal:today',
+            'status' => 'required|in:hadir,izin,sakit',
+        ]);
+
+        $userId = $request->input('user_id');
+        $date = Carbon::parse($request->input('date'));
+        $status = $request->input('status');
+        
+        // Find if there is a schedule for this date
+        $schedule = \App\Models\Schedule::whereDate('activity_date', $date)->first();
+        
+        // Check if there is already an attendance for this user on this date
+        $existing = Attendance::where('user_id', $userId)
+            ->whereDate('check_in_at', $date)
+            ->first();
+            
+        if ($existing) {
+            return redirect()->back()->with('error', 'Anggota tersebut sudah memiliki data absensi pada tanggal ini.');
+        }
+
+        // Get an active location or default to first location
+        $location = \App\Models\Location::where('is_active', true)->first() 
+            ?? \App\Models\Location::first();
+
+        if (!$location) {
+            return redirect()->back()->with('error', 'Belum ada lokasi absen yang terdaftar di database.');
+        }
+
+        // Create manual attendance
+        Attendance::create([
+            'user_id' => $userId,
+            'schedule_id' => $schedule ? $schedule->id : null,
+            'location_id' => $location->id,
+            'check_in_at' => $date->copy()->setTime(8, 0, 0), // Default to 08:00 AM
+            'check_in_lat' => $location->latitude,
+            'check_in_lng' => $location->longitude,
+            'face_match_score' => 1.0,
+            'photo_path' => null,
+            'distance_meters' => 0.0,
+            'status' => $status,
+            'notes' => 'Dihadirkan manual (' . ucfirst($status) . ') oleh Sekretaris/Koordinator',
+            'approved_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Anggota berhasil dihadirkan secara manual.');
     }
 }

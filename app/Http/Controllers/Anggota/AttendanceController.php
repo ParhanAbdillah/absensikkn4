@@ -71,13 +71,29 @@ class AttendanceController extends Controller
         $user = auth()->user();
         $today = Carbon::today();
 
-        // 1. Cek apakah sudah absen hari ini
-        $existing = Attendance::where('user_id', $user->id)
-            ->whereDate('check_in_at', $today)
+        // 1. Dapatkan jadwal aktif hari ini
+        $schedule = Schedule::whereDate('activity_date', $today)
+            ->where('is_active', true)
             ->first();
 
-        if ($existing) {
-            return response()->json(['success' => false, 'message' => 'Anda sudah melakukan absensi hari ini.']);
+        // 2. Cek apakah sudah absen untuk jadwal ini
+        if ($schedule) {
+            $existing = Attendance::where('user_id', $user->id)
+                ->where('schedule_id', $schedule->id)
+                ->first();
+            
+            if ($existing) {
+                return response()->json(['success' => false, 'message' => 'Anda sudah melakukan absensi untuk jadwal kegiatan ini.']);
+            }
+        } else {
+            // Fallback jika tidak ada jadwal terdaftar, cek apakah sudah absen hari ini
+            $existing = Attendance::where('user_id', $user->id)
+                ->whereDate('check_in_at', $today)
+                ->first();
+            
+            if ($existing) {
+                return response()->json(['success' => false, 'message' => 'Anda sudah melakukan absensi hari ini.']);
+            }
         }
 
         $location = Location::find($request->location_id);
@@ -116,8 +132,8 @@ class AttendanceController extends Controller
             $storedDescriptor = $storedFace->descriptor;
             $matchScore = $this->euclideanDistance($inputDescriptor, $storedDescriptor);
  
-            // Threshold kecocokan wajah (biasanya <= 0.6)
-            if ($matchScore > 0.6) {
+            // Threshold kecocokan wajah (biasanya <= 0.68 untuk real-world mobile devices)
+            if ($matchScore > 0.68) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Verifikasi wajah gagal. Wajah tidak cocok dengan referensi.'
@@ -140,6 +156,7 @@ class AttendanceController extends Controller
         $now = Carbon::now();
         Attendance::create([
             'user_id' => $user->id,
+            'schedule_id' => $schedule ? $schedule->id : null,
             'location_id' => $location->id,
             'check_in_at' => $now,
             'check_in_lat' => $request->latitude,

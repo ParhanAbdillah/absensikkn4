@@ -337,13 +337,13 @@
                             const detectionCtx = detectionCanvas.getContext('2d');
                             detectionCtx.drawImage(video, 0, 0, targetWidth, targetHeight);
 
-                            let detection = await faceapi.detectSingleFace(detectionCanvas)
+                            let detection = await faceapi.detectSingleFace(detectionCanvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 }))
                                 .withFaceLandmarks()
                                 .withFaceDescriptor();
 
                             // Fallback: Jika gagal pada resolusi rendah, coba resolusi asli video langsung
                             if (!detection) {
-                                detection = await faceapi.detectSingleFace(video)
+                                detection = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 }))
                                     .withFaceLandmarks()
                                     .withFaceDescriptor();
                             }

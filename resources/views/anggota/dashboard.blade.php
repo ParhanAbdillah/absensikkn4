@@ -48,26 +48,39 @@
                 </a>
             </div>
             @else
-            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-emerald-100 rounded-xl text-emerald-600 flex-shrink-0">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold text-emerald-700">Wajah Sudah Terdaftar ✓</p>
-                        <p class="text-xs text-emerald-500 mt-0.5">Anda siap melakukan absensi menggunakan sistem pengenalan wajah.</p>
-                    </div>
-                </div>
                 @if(!$todayAttendance)
-                <a href="{{ route('anggota.attendance.index') }}" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-3 md:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-emerald-200 animate-button flex-shrink-0">
-                    Mulai Absensi →
-                </a>
+                <!-- Belum Absen: Box Merah & Button Merah -->
+                <div class="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 animate-pulse">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-rose-100 rounded-xl text-rose-600 flex-shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-rose-700">Belum Absen Hari Ini!</p>
+                            <p class="text-xs text-rose-500 mt-0.5">Anda belum melakukan absensi masuk. Harap segera lakukan absensi.</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('anggota.attendance.index') }}" style="background-color: #dc2626;" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-3 md:py-2.5 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-md shadow-rose-200 animate-button flex-shrink-0">
+                        Mulai Absensi →
+                    </a>
+                </div>
                 @else
-                <span class="w-full md:w-auto inline-flex justify-center items-center px-4 py-3 md:py-2.5 bg-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-widest rounded-xl border border-emerald-200 flex-shrink-0">
-                    ✓ Sudah Absen Hari Ini
-                </span>
+                <!-- Sudah Absen: Box Biru & Button Biru -->
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-blue-100 rounded-xl text-blue-600 flex-shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-blue-700">Sudah Absen Hari Ini ✓</p>
+                            <p class="text-xs text-blue-500 mt-0.5">Terima kasih, Anda telah melakukan absensi kehadiran hari ini.</p>
+                        </div>
+                    </div>
+                    <span style="background-color: #2563eb;" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-3 md:py-2.5 text-white font-bold text-xs uppercase tracking-widest rounded-xl border border-blue-200 flex-shrink-0">
+                        ✓ Sudah Absen Hari Ini
+                    </span>
+                </div>
                 @endif
-            </div>
             @endif
 
             {{-- Stat Cards --}}

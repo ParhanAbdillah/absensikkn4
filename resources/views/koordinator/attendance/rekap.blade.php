@@ -199,6 +199,26 @@
                                 <div class="text-xs font-bold text-slate-800">{{ $u->name }}</div>
                                 <div class="text-[9px] text-slate-400 font-semibold">{{ $u->nim ?? 'NIM -' }}</div>
                             </div>
+                            @if (Auth::user()->isSekretaris() || Auth::user()->isKoordinator())
+                                <form method="POST" action="{{ route('koordinator.attendance.manual') }}" class="ml-1.5 flex items-center gap-1">
+                                    @csrf
+                                    <input type="hidden" name="user_id" value="{{ $u->id }}">
+                                    <input type="hidden" name="date" value="{{ $selectedDate->toDateString() }}">
+                                    <select name="status" class="text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 font-semibold text-slate-600 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                                        <option value="hadir">Hadir</option>
+                                        <option value="izin">Izin</option>
+                                        <option value="sakit">Sakit</option>
+                                    </select>
+                                    <button type="submit" 
+                                            onclick="return confirm('Simpan status kehadiran {{ $u->name }} sebagai \'' + this.form.querySelector('select[name=status]').value + '\' pada tanggal {{ $selectedDate->isoFormat('D MMMM Y') }}?')"
+                                            class="p-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition"
+                                            title="Simpan Kehadiran">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     @endforeach
                 </div>
