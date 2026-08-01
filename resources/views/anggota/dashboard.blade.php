@@ -10,10 +10,19 @@
 
             {{-- Welcome Banner --}}
             <div class="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 flex items-center justify-between shadow-lg shadow-emerald-200 relative overflow-hidden animate-card">
-                <div class="relative z-10">
-                    <p class="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1">Selamat datang kembali</p>
-                    <h2 class="text-white text-2xl font-extrabold tracking-tight">{{ Auth::user()->name }}</h2>
-                    <p class="text-emerald-100 text-sm mt-1">{{ Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}</p>
+                <div class="relative z-10 flex items-center gap-4">
+                    @if (Auth::user()->avatar && file_exists(public_path(Auth::user()->avatar)))
+                        <img src="{{ asset(Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white/40 shadow-md flex-shrink-0">
+                    @else
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/20 text-white flex items-center justify-center font-extrabold text-xl sm:text-2xl border-2 border-white/40 shadow-md flex-shrink-0">
+                            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                        </div>
+                    @endif
+                    <div>
+                        <p class="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1">Selamat datang kembali</p>
+                        <h2 class="text-white text-2xl font-extrabold tracking-tight">{{ Auth::user()->name }}</h2>
+                        <p class="text-emerald-100 text-sm mt-1">{{ Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}</p>
+                    </div>
                 </div>
                 <div class="hidden md:block relative z-10 text-right">
                     @if($todayAttendance)

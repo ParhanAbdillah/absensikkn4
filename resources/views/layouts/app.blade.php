@@ -254,10 +254,14 @@
             <!-- Profile Footer Section -->
             <div class="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div class="flex items-center gap-3">
-                    <div
-                        class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-extrabold text-sm shadow-sm">
-                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                    </div>
+                    @if (Auth::user()->avatar && file_exists(public_path(Auth::user()->avatar)))
+                        <img src="{{ asset(Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" class="w-9 h-9 rounded-full object-cover shadow-sm border border-emerald-500">
+                    @else
+                        <div
+                            class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-extrabold text-sm shadow-sm">
+                            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                        </div>
+                    @endif
                     <div class="truncate w-28">
                         <p class="text-xs font-bold text-slate-800 truncate leading-none mb-1">
                             {{ Auth::user()->name }}</p>
