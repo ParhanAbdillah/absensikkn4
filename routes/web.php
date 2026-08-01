@@ -123,4 +123,13 @@ Route::get('/migrate-db', function () {
     abort(403);
 });
 
+// Fallback route for storage files (ensures signatures and uploads serve reliably across all environments)
+Route::get('/storage/{path}', function ($path) {
+    $filePath = storage_path('app/public/' . $path);
+    if (!file_exists($filePath)) {
+        abort(404);
+    }
+    return response()->file($filePath);
+})->where('path', '.*');
+
 require __DIR__.'/auth.php';

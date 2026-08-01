@@ -172,17 +172,17 @@
                                     </td>
                                     {{-- Tanda Tangan --}}
                                     <td class="px-5 py-3.5 text-center">
-                                        <template x-if="u.signature_url">
+                                        <template x-if="getSignatureUrl(u)">
                                             <div class="inline-flex items-center gap-1">
                                                 <button @click="openPreviewModal(u)" title="Lihat Tanda Tangan" class="group relative px-2 py-1 border border-slate-200 rounded-lg hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/50 transition">
-                                                    <img :src="u.signature_url" class="h-7 w-14 object-contain" alt="TTD">
+                                                    <img :src="getSignatureUrl(u)" class="h-7 w-14 object-contain" alt="TTD">
                                                     <div class="absolute inset-0 bg-slate-900/10 group-hover:bg-emerald-600/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                                                         <svg class="w-3.5 h-3.5 text-emerald-700 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                     </div>
                                                 </button>
                                             </div>
                                         </template>
-                                        <template x-if="!u.signature_url">
+                                        <template x-if="!getSignatureUrl(u)">
                                             <span class="inline-flex items-center text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                                                 Belum Ada
                                             </span>
@@ -475,10 +475,10 @@
                             </template>
                         </div>
 
-                        <template x-if="editData.signature_url && !removeSignature">
+                        <template x-if="getSignatureUrl(editData) && !removeSignature">
                             <div class="p-3 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-between">
                                 <div class="flex items-center gap-3">
-                                    <img :src="editData.signature_url" class="h-16 max-w-[180px] object-contain bg-white p-1 rounded border border-slate-200 shadow-sm" alt="Signature">
+                                    <img :src="getSignatureUrl(editData)" class="h-16 max-w-[180px] object-contain bg-white p-1 rounded border border-slate-200 shadow-sm" alt="Signature">
                                     <span class="text-xs font-medium text-slate-500">Tanda tangan tersimpan</span>
                                 </div>
                                 <button type="button" @click="openPreviewModal(editData)" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg transition border border-slate-200 shadow-sm">
@@ -487,7 +487,7 @@
                             </div>
                         </template>
 
-                        <template x-if="!editData.signature_url && !removeSignature">
+                        <template x-if="!getSignatureUrl(editData) && !removeSignature">
                             <div class="p-3 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-400 font-semibold text-center">
                                 Belum ada tanda tangan tersimpan.
                             </div>
@@ -581,10 +581,10 @@
 
                 {{-- Signature Display Box --}}
                 <div class="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-2xl relative min-h-[200px]">
-                    <template x-if="previewData.signature_url">
-                        <img :src="previewData.signature_url" class="max-h-52 max-w-full object-contain filter drop-shadow bg-white p-3 rounded-xl border border-slate-200" alt="Tanda Tangan">
+                    <template x-if="getSignatureUrl(previewData)">
+                        <img :src="getSignatureUrl(previewData)" class="max-h-52 max-w-full object-contain filter drop-shadow bg-white p-3 rounded-xl border border-slate-200" alt="Tanda Tangan">
                     </template>
-                    <template x-if="!previewData.signature_url">
+                    <template x-if="!getSignatureUrl(previewData)">
                         <div class="text-center text-slate-400 py-8">
                             <svg class="w-12 h-12 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                             <p class="text-sm font-semibold">Tanda tangan belum diunggah.</p>
@@ -594,7 +594,7 @@
 
                 {{-- Actions --}}
                 <div class="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                    <template x-if="previewData.signature_url">
+                    <template x-if="getSignatureUrl(previewData)">
                         <button type="button" @click="deleteSignatureDirect(previewData)"
                                 class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-xl border border-rose-200 transition">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -642,6 +642,22 @@
                         url.searchParams.set('page', val);
                         window.history.replaceState({}, '', url.toString());
                     });
+                },
+
+                getSignatureUrl(u) {
+                    if (!u) return '';
+                    const sig = u.signature_url || u.signature;
+                    if (!sig) return '';
+                    if (sig.startsWith('data:image') || sig.startsWith('http://') || sig.startsWith('https://')) {
+                        return sig;
+                    }
+                    if (sig.startsWith('/storage/')) {
+                        return sig;
+                    }
+                    if (sig.startsWith('storage/')) {
+                        return '/' + sig;
+                    }
+                    return '/storage/' + sig.replace(/^\/+/, '');
                 },
 
                 get filteredUsers() {
