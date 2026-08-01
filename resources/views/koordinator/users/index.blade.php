@@ -655,7 +655,7 @@
                     }
                     // Fallback using Blade asset if signature_url somehow fails
                     const cleanPath = sig.replace(/^\/+/, '').replace(/^storage\//, '');
-                    return `{{ asset('storage') }}/${cleanPath}`;
+                    return `{{ asset('file/storage') }}/${cleanPath}`;
                 },
 
                 get filteredUsers() {

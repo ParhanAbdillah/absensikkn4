@@ -123,8 +123,8 @@ Route::get('/migrate-db', function () {
     abort(403);
 });
 
-// Fallback route for storage files (ensures signatures and uploads serve reliably across all environments)
-Route::get('/storage/{path}', function ($path) {
+// Fallback route for storage files (ensures signatures and uploads serve reliably across all environments, bypassing physical folder conflicts on shared hosting)
+Route::get('/file/storage/{path}', function ($path) {
     $filePath = storage_path('app/public/' . $path);
     if (!file_exists($filePath)) {
         abort(404);
