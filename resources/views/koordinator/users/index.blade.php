@@ -646,18 +646,16 @@
 
                 getSignatureUrl(u) {
                     if (!u) return '';
-                    const sig = u.signature_url || u.signature;
+                    if (u.signature_url) return u.signature_url;
+                    
+                    const sig = u.signature;
                     if (!sig) return '';
                     if (sig.startsWith('data:image') || sig.startsWith('http://') || sig.startsWith('https://')) {
                         return sig;
                     }
-                    if (sig.startsWith('/storage/')) {
-                        return sig;
-                    }
-                    if (sig.startsWith('storage/')) {
-                        return '/' + sig;
-                    }
-                    return '/storage/' + sig.replace(/^\/+/, '');
+                    // Fallback using Blade asset if signature_url somehow fails
+                    const cleanPath = sig.replace(/^\/+/, '').replace(/^storage\//, '');
+                    return `{{ asset('storage') }}/${cleanPath}`;
                 },
 
                 get filteredUsers() {
