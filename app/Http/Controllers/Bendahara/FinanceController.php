@@ -152,6 +152,37 @@ class FinanceController extends Controller
         return redirect()->route('finance.index')->with('success', 'Transaksi keuangan berhasil dicatat!');
     }
 
+    public function update(Request $request, FinanceTransaction $transaction)
+    {
+        $user = Auth::user();
+        if (!$user->isBendahara() && !$user->isKoordinator()) {
+            abort(403, 'Hanya Bendahara atau Koordinator yang dapat memperbarui transaksi keuangan.');
+        }
+
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'type' => 'required|in:income,expense',
+            'category' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'required|string',
+            'receipt' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($request->hasFile('receipt')) {
+            if ($transaction->receipt_path && file_exists(public_path($transaction->receipt_path))) {
+                unlink(public_path($transaction->receipt_path));
+            }
+            $file = $request->file('receipt');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/receipts'), $filename);
+            $validated['receipt_path'] = 'uploads/receipts/' . $filename;
+        }
+
+        $transaction->update($validated);
+
+        return redirect()->route('finance.index')->with('success', 'Transaksi keuangan berhasil diperbarui!');
+    }
+
     public function destroy(FinanceTransaction $transaction)
     {
         $user = Auth::user();

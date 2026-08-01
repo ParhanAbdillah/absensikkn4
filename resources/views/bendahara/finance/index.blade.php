@@ -1,5 +1,5 @@
 <x-app-layout>
-<div class="space-y-6" x-data="{ openAddModal: false, selectedReceipt: null }">
+<div class="space-y-6" x-data="{ openAddModal: false, openEditModal: false, selectedReceipt: null, editData: { id: '', date: '', type: 'income', category: 'Kas Anggota', amount: '', description: '', url: '' }, openEdit(item, url) { this.editData = { id: item.id, date: (item.date || '').substring(0, 10), type: item.type, category: item.category, amount: item.amount, description: item.description, url: url }; this.openEditModal = true; } }">
     <!-- Floating Toast Notification System (Disappears after 3 seconds) -->
     <div class="fixed top-5 right-5 z-[9999] flex flex-col gap-3"
          x-data="{ showSuccess: {{ session('success') ? 'true' : 'false' }}, showError: {{ session('error') ? 'true' : 'false' }} }"
@@ -282,15 +282,22 @@
                             </td>
                             @if (Auth::user()->isBendahara() || Auth::user()->isKoordinator())
                                 <td class="px-5 py-4 whitespace-nowrap text-center text-xs">
-                                    <form action="{{ route('finance.destroy', $t->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-rose-600 hover:text-rose-800 p-1 bg-rose-50 hover:bg-rose-100 rounded-lg transition border border-rose-100">
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <button type="button" @click="openEdit({{ json_encode($t) }}, '{{ route('finance.update', $t->id) }}')" class="text-amber-600 hover:text-amber-800 p-1.5 bg-amber-50 hover:bg-amber-100 rounded-lg transition border border-amber-100" title="Edit Transaksi">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                             </svg>
                                         </button>
-                                    </form>
+                                        <form action="{{ route('finance.destroy', $t->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-rose-600 hover:text-rose-800 p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition border border-rose-100" title="Hapus Transaksi">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             @endif
                         </tr>
@@ -398,6 +405,87 @@
                     </button>
                     <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-[10px] transition shadow-sm animate-button">
                         Simpan Transaksi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Edit Transaksi Keuangan (Alpine.js Controlled AJAX Modal) -->
+    <div x-show="openEditModal" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" style="display: none;" @keydown.escape.window="openEditModal = false">
+        <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-100" @click.away="openEditModal = false" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <span class="p-1 bg-amber-50 text-amber-600 rounded-lg">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </span>
+                    Edit Transaksi Keuangan
+                </h3>
+                <button @click="openEditModal = false" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form :action="editData.url" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+                @csrf
+                @method('PUT')
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Tanggal</label>
+                        <input type="date" name="date" required x-model="editData.date" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Jenis</label>
+                        <select name="type" required x-model="editData.type" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 bg-white">
+                            <option value="income">Pemasukan (Masuk)</option>
+                            <option value="expense">Pengeluaran (Keluar)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Kategori</label>
+                    <select name="category" required x-model="editData.category" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 bg-white">
+                        <option value="Kas Anggota">Kas Anggota</option>
+                        <option value="Donasi / Sponsor">Donasi / Sponsor</option>
+                        <option value="Konsumsi">Konsumsi</option>
+                        <option value="Peralatan / Perlengkapan">Peralatan / Perlengkapan</option>
+                        <option value="PDD / Dokumentasi">PDD / Dokumentasi</option>
+                        <option value="Transportasi">Transportasi</option>
+                        <option value="Print / Jilid / Fotokopi">Print / Jilid / Fotokopi</option>
+                        <option value="Lain-lain">Lain-lain</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nominal (Rupiah)</label>
+                    <div class="flex rounded-xl border border-slate-200 overflow-hidden focus-within:border-amber-500 focus-within:ring-1 focus-within:ring-amber-500 h-[38px]">
+                        <span class="inline-flex items-center px-3.5 bg-slate-50 border-r border-slate-200 text-xs font-bold text-slate-500 flex-shrink-0">Rp</span>
+                        <input type="number" step="0.01" min="0.01" name="amount" required x-model="editData.amount" placeholder="0.00" class="w-full border-0 px-3 py-2 text-xs text-slate-700 font-bold focus:ring-0 focus:outline-none bg-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Keterangan Transaksi</label>
+                    <textarea name="description" required rows="3" x-model="editData.description" placeholder="Masukkan detail peruntukan atau sumber dana kas..." class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Ganti Bukti Nota / Kwitansi (Opsional)</label>
+                    <input type="file" name="receipt" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 file:cursor-pointer">
+                    <p class="text-[9px] text-slate-400 mt-1">Biarkan kosong jika tidak ingin mengubah foto bukti.</p>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" @click="openEditModal = false" class="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-semibold text-[10px] transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold text-[10px] transition shadow-sm">
+                        Simpan Perubahan
                     </button>
                 </div>
             </form>

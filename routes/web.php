@@ -95,6 +95,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:bendahara'])->prefix('finance')->name('finance.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Bendahara\FinanceController::class, 'index'])->name('index');
     Route::post('/', [\App\Http\Controllers\Bendahara\FinanceController::class, 'store'])->name('store');
+    Route::put('/{transaction}', [\App\Http\Controllers\Bendahara\FinanceController::class, 'update'])->name('update');
     Route::delete('/{transaction}', [\App\Http\Controllers\Bendahara\FinanceController::class, 'destroy'])->name('destroy');
     Route::get('/export', [\App\Http\Controllers\Bendahara\FinanceController::class, 'export'])->name('export');
 
