@@ -306,8 +306,8 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <x-input-label for="email" value="Email *" />
-                            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" required placeholder="anggota@kkn.local" />
+                            <x-input-label for="email" value="Email" />
+                            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" placeholder="anggota@kkn.local (opsional)" />
                         </div>
                         <div>
                             <x-input-label for="phone" value="No. WhatsApp *" />
@@ -429,8 +429,8 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <x-input-label for="edit_email" value="Email *" />
-                            <x-text-input id="edit_email" class="block mt-1 w-full" type="email" name="email" x-model="editData.email" required />
+                            <x-input-label for="edit_email" value="Email" />
+                            <x-text-input id="edit_email" class="block mt-1 w-full" type="email" name="email" x-model="editData.email" placeholder="Kosongkan jika tidak ada" />
                         </div>
                         <div>
                             <x-input-label for="edit_phone" value="No. WhatsApp *" />
