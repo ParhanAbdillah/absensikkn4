@@ -34,6 +34,31 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'signature_url',
+    ];
+
+    /**
+     * Get the signature URL.
+     */
+    public function getSignatureUrlAttribute(): ?string
+    {
+        if (!$this->signature) {
+            return null;
+        }
+
+        if (str_starts_with($this->signature, 'data:image') || str_starts_with($this->signature, 'http://') || str_starts_with($this->signature, 'https://')) {
+            return $this->signature;
+        }
+
+        return asset('storage/' . ltrim($this->signature, '/'));
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>

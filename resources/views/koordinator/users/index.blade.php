@@ -126,6 +126,7 @@
                                         </div>
                                     </button>
                                 </th>
+                                <th class="px-5 py-3.5 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tanda Tangan</th>
                                 <th class="px-5 py-3.5 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Aksi</th>
                             </tr>
                         </thead>
@@ -169,6 +170,24 @@
                                               x-text="u.role">
                                         </span>
                                     </td>
+                                    {{-- Tanda Tangan --}}
+                                    <td class="px-5 py-3.5 text-center">
+                                        <template x-if="u.signature_url">
+                                            <div class="inline-flex items-center gap-1">
+                                                <button @click="openPreviewModal(u)" title="Lihat Tanda Tangan" class="group relative px-2 py-1 border border-slate-200 rounded-lg hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/50 transition">
+                                                    <img :src="u.signature_url" class="h-7 w-14 object-contain" alt="TTD">
+                                                    <div class="absolute inset-0 bg-slate-900/10 group-hover:bg-emerald-600/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                                        <svg class="w-3.5 h-3.5 text-emerald-700 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <template x-if="!u.signature_url">
+                                            <span class="inline-flex items-center text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                                Belum Ada
+                                            </span>
+                                        </template>
+                                    </td>
                                     {{-- Actions --}}
                                     <td class="px-5 py-3.5">
                                         <div class="flex items-center justify-center gap-2">
@@ -197,7 +216,7 @@
                             {{-- Empty state --}}
                             <template x-if="filteredUsers.length === 0">
                                 <tr>
-                                    <td colspan="7" class="py-16 text-center">
+                                    <td colspan="9" class="py-16 text-center">
                                         <div class="flex flex-col items-center gap-3 text-slate-300">
                                             <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                             <p class="text-sm font-semibold text-slate-400">Tidak ada data anggota yang sesuai.</p>
@@ -248,9 +267,11 @@
             @method('DELETE')
         </form>
 
+
+
         {{-- ====== MODAL TAMBAH ANGGOTA ====== --}}
         <x-modal name="modal-tambah-user" :show="false" focusable>
-            <form action="{{ route('koordinator.users.store') }}" method="POST" class="p-6">
+            <form action="{{ route('koordinator.users.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
                 @csrf
                 <div class="flex items-center gap-3 mb-6">
                     <div class="p-2 bg-emerald-100 rounded-xl text-emerald-600">
@@ -310,17 +331,51 @@
                         </div>
                     </div>
 
-                    {{-- Signature Canvas --}}
+                    {{-- Signature Input (Canvas / File Upload) --}}
                     <div>
-                        <x-input-label value="Tanda Tangan Anggota" />
-                        <div class="relative w-full h-36 border border-slate-200 rounded-xl bg-slate-50 overflow-hidden mt-1">
-                            <canvas id="signatureCanvasAdd" class="w-full h-full cursor-crosshair touch-none"></canvas>
-                            <button type="button" id="clearSigBtnAdd" class="absolute bottom-2 right-2 px-2.5 py-1 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-[10px] font-bold rounded-lg transition shadow-sm">
-                                Hapus TTD
-                            </button>
+                        <div class="flex items-center justify-between mb-1">
+                            <x-input-label value="Tanda Tangan Anggota" />
+                            <div class="flex items-center bg-slate-100 p-0.5 rounded-lg">
+                                <button type="button" @click="signatureModeAdd = 'draw'" :class="signatureModeAdd === 'draw' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-2.5 py-1 text-[11px] font-bold rounded-md transition">
+                                    Gambar TTD
+                                </button>
+                                <button type="button" @click="signatureModeAdd = 'file'" :class="signatureModeAdd === 'file' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-2.5 py-1 text-[11px] font-bold rounded-md transition">
+                                    Upload File
+                                </button>
+                            </div>
                         </div>
-                        <input type="hidden" name="signature" id="signatureInputAdd">
-                        <p class="text-[10px] text-slate-400 mt-1 font-semibold">Gunakan mouse atau layar sentuh untuk menggambar tanda tangan di atas.</p>
+
+                        {{-- Draw Canvas Mode --}}
+                        <div x-show="signatureModeAdd === 'draw'">
+                            <div class="relative w-full h-36 border border-slate-200 rounded-xl bg-slate-50 overflow-hidden mt-1">
+                                <canvas id="signatureCanvasAdd" class="w-full h-full cursor-crosshair touch-none"></canvas>
+                                <button type="button" id="clearSigBtnAdd" class="absolute bottom-2 right-2 px-2.5 py-1 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-[10px] font-bold rounded-lg transition shadow-sm">
+                                    Hapus TTD
+                                </button>
+                            </div>
+                            <input type="hidden" name="signature" id="signatureInputAdd">
+                            <p class="text-[10px] text-slate-400 mt-1 font-semibold">Gunakan mouse atau layar sentuh untuk menggambar tanda tangan di atas.</p>
+                        </div>
+
+                        {{-- File Upload Mode --}}
+                        <div x-show="signatureModeAdd === 'file'" class="mt-1">
+                            <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-200 hover:border-emerald-400 rounded-xl cursor-pointer bg-slate-50 hover:bg-emerald-50/20 transition group">
+                                <template x-if="!filePreviewUrlAdd">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <svg class="w-8 h-8 mb-2 text-slate-400 group-hover:text-emerald-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        <p class="text-xs font-bold text-slate-600 group-hover:text-emerald-700">Klik untuk unggah file gambar TTD</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">PNG, JPG, JPEG, WEBP (Maks. 2MB)</p>
+                                    </div>
+                                </template>
+                                <template x-if="filePreviewUrlAdd">
+                                    <div class="relative w-full h-full flex items-center justify-center p-2">
+                                        <img :src="filePreviewUrlAdd" class="max-h-full max-w-full object-contain" alt="Preview File Upload">
+                                        <span class="absolute bottom-2 right-2 px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-bold rounded">Terpilih</span>
+                                    </div>
+                                </template>
+                                <input type="file" name="signature_file" accept="image/*" @change="handleFileUpload($event, 'add')" class="hidden" />
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -336,9 +391,11 @@
 
         {{-- ====== MODAL EDIT ANGGOTA ====== --}}
         <x-modal name="modal-edit-user" :show="false" focusable>
-            <form :action="'/koordinator/users/' + editData.id" method="POST" class="p-6">
+            <form :action="'/koordinator/users/' + editData.id" method="POST" enctype="multipart/form-data" class="p-6">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="remove_signature" :value="removeSignature ? '1' : '0'">
+
                 <div class="flex items-center gap-3 mb-6">
                     <div class="p-2 bg-blue-100 rounded-xl text-blue-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -397,25 +454,94 @@
                         </div>
                     </div>
 
-                    {{-- Existing Signature Preview --}}
-                    <div x-show="editData.signature" class="mt-2">
-                        <x-input-label value="Tanda Tangan Saat Ini" />
-                        <div class="mt-1 p-2 border border-slate-200 rounded-xl bg-slate-50 inline-block">
-                            <img :src="'/storage/' + editData.signature" class="h-16 object-contain" alt="Signature">
+                    {{-- Existing Signature Preview & Delete Action --}}
+                    <div class="mt-4 pt-3 border-t border-slate-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <x-input-label value="Tanda Tangan Saat Ini" />
+                            <template x-if="editData.signature_url && !removeSignature">
+                                <button type="button" @click="removeSignature = true" class="text-xs font-bold text-rose-600 hover:text-rose-700 inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 rounded-lg border border-rose-200 transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    Hapus TTD
+                                </button>
+                            </template>
+                            <template x-if="removeSignature">
+                                <button type="button" @click="removeSignature = false" class="text-xs font-bold text-slate-600 hover:text-slate-700 underline">
+                                    Batal Hapus TTD
+                                </button>
+                            </template>
                         </div>
+
+                        <template x-if="editData.signature_url && !removeSignature">
+                            <div class="p-3 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <img :src="editData.signature_url" class="h-16 max-w-[180px] object-contain bg-white p-1 rounded border border-slate-200 shadow-sm" alt="Signature">
+                                    <span class="text-xs font-medium text-slate-500">Tanda tangan tersimpan</span>
+                                </div>
+                                <button type="button" @click="openPreviewModal(editData)" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg transition border border-slate-200 shadow-sm">
+                                    Preview Zoom
+                                </button>
+                            </div>
+                        </template>
+
+                        <template x-if="!editData.signature_url && !removeSignature">
+                            <div class="p-3 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-400 font-semibold text-center">
+                                Belum ada tanda tangan tersimpan.
+                            </div>
+                        </template>
+
+                        <template x-if="removeSignature">
+                            <div class="p-3 border border-rose-200 bg-rose-50 rounded-xl text-xs text-rose-600 font-bold flex items-center gap-2">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Tanda tangan akan dihapus saat disimpan.
+                            </div>
+                        </template>
                     </div>
 
-                    {{-- Signature Canvas --}}
-                    <div class="mt-2">
-                        <x-input-label value="Ubah/Tambahkan Tanda Tangan" />
-                        <div class="relative w-full h-36 border border-slate-200 rounded-xl bg-slate-50 overflow-hidden mt-1">
-                            <canvas id="signatureCanvasEdit" class="w-full h-full cursor-crosshair touch-none"></canvas>
-                            <button type="button" id="clearSigBtnEdit" class="absolute bottom-2 right-2 px-2.5 py-1 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-[10px] font-bold rounded-lg transition shadow-sm">
-                                Hapus TTD
-                            </button>
+                    {{-- Signature Edit Mode (Draw or Upload) --}}
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <x-input-label value="Ubah/Tambahkan Tanda Tangan" />
+                            <div class="flex items-center bg-slate-100 p-0.5 rounded-lg">
+                                <button type="button" @click="signatureModeEdit = 'draw'" :class="signatureModeEdit === 'draw' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-2.5 py-1 text-[11px] font-bold rounded-md transition">
+                                    Gambar TTD
+                                </button>
+                                <button type="button" @click="signatureModeEdit = 'file'" :class="signatureModeEdit === 'file' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-2.5 py-1 text-[11px] font-bold rounded-md transition">
+                                    Upload File
+                                </button>
+                            </div>
                         </div>
-                        <input type="hidden" name="signature" id="signatureInputEdit">
-                        <p class="text-[10px] text-slate-400 mt-1 font-semibold">Biarkan kosong jika tidak ingin mengubah tanda tangan yang sudah ada.</p>
+
+                        {{-- Mode 1: Draw Canvas --}}
+                        <div x-show="signatureModeEdit === 'draw'">
+                            <div class="relative w-full h-36 border border-slate-200 rounded-xl bg-slate-50 overflow-hidden mt-1">
+                                <canvas id="signatureCanvasEdit" class="w-full h-full cursor-crosshair touch-none"></canvas>
+                                <button type="button" id="clearSigBtnEdit" class="absolute bottom-2 right-2 px-2.5 py-1 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-[10px] font-bold rounded-lg transition shadow-sm">
+                                    Hapus Coretan
+                                </button>
+                            </div>
+                            <input type="hidden" name="signature" id="signatureInputEdit">
+                            <p class="text-[10px] text-slate-400 mt-1 font-semibold">Gunakan mouse atau layar sentuh untuk menggambar tanda tangan di atas.</p>
+                        </div>
+
+                        {{-- Mode 2: File Upload --}}
+                        <div x-show="signatureModeEdit === 'file'" class="mt-1">
+                            <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-200 hover:border-emerald-400 rounded-xl cursor-pointer bg-slate-50 hover:bg-emerald-50/20 transition group">
+                                <template x-if="!filePreviewUrlEdit">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <svg class="w-8 h-8 mb-2 text-slate-400 group-hover:text-emerald-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        <p class="text-xs font-bold text-slate-600 group-hover:text-emerald-700">Klik untuk unggah file gambar TTD</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">PNG, JPG, JPEG, WEBP (Maks. 2MB)</p>
+                                    </div>
+                                </template>
+                                <template x-if="filePreviewUrlEdit">
+                                    <div class="relative w-full h-full flex items-center justify-center p-2">
+                                        <img :src="filePreviewUrlEdit" class="max-h-full max-w-full object-contain" alt="Preview File Upload">
+                                        <span class="absolute bottom-2 right-2 px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-bold rounded">Terpilih</span>
+                                    </div>
+                                </template>
+                                <input type="file" name="signature_file" accept="image/*" @change="handleFileUpload($event, 'edit')" class="hidden" />
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -427,6 +553,60 @@
                     </x-primary-button>
                 </div>
             </form>
+        </x-modal>
+
+        {{-- ====== MODAL PREVIEW TANDA TANGAN ====== --}}
+        <x-modal name="modal-preview-signature" :show="false" focusable class="!z-[60]">
+            <div class="p-6">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-emerald-100 rounded-xl text-emerald-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-extrabold text-slate-900 leading-none" x-text="previewData.name"></h3>
+                            <p class="text-xs text-slate-400 font-semibold mt-1">
+                                NIM: <span x-text="previewData.nim || '—'"></span> • Peran: <span class="capitalize" x-text="previewData.role"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" @click="$dispatch('close')" class="text-slate-400 hover:text-slate-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                {{-- Signature Display Box --}}
+                <div class="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-2xl relative min-h-[200px]">
+                    <template x-if="previewData.signature_url">
+                        <img :src="previewData.signature_url" class="max-h-52 max-w-full object-contain filter drop-shadow bg-white p-3 rounded-xl border border-slate-200" alt="Tanda Tangan">
+                    </template>
+                    <template x-if="!previewData.signature_url">
+                        <div class="text-center text-slate-400 py-8">
+                            <svg class="w-12 h-12 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <p class="text-sm font-semibold">Tanda tangan belum diunggah.</p>
+                        </div>
+                    </template>
+                </div>
+
+                {{-- Actions --}}
+                <div class="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                    <template x-if="previewData.signature_url">
+                        <button type="button" @click="deleteSignatureDirect(previewData)"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-xl border border-rose-200 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            Hapus Tanda Tangan
+                        </button>
+                    </template>
+                    <div class="flex items-center gap-3 ml-auto">
+                        <x-secondary-button @click="$dispatch('close')">Tutup</x-secondary-button>
+                        <button type="button" @click="$dispatch('close'); openEditModal(previewData);"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            Edit Tanda Tangan
+                        </button>
+                    </div>
+                </div>
+            </div>
         </x-modal>
 
     </div>{{-- end x-data --}}
@@ -443,7 +623,13 @@
                 sortDir: 'asc',
                 perPage: 10,
                 currentPage: 1,
-                editData: { id: '', name: '', email: '', nim: '', phone: '', role: 'anggota', divisi: '', class: '' },
+                editData: { id: '', name: '', email: '', nim: '', phone: '', role: 'anggota', divisi: '', class: '', signature_url: '' },
+                previewData: { id: '', name: '', nim: '', role: '', signature_url: '' },
+                removeSignature: false,
+                signatureModeAdd: 'draw',
+                signatureModeEdit: 'draw',
+                filePreviewUrlAdd: null,
+                filePreviewUrlEdit: null,
 
                 get filteredUsers() {
                     let data = this.allUsers.filter(u => {
@@ -507,14 +693,82 @@
                     return `Menampilkan ${from}–${to} dari ${total} data`;
                 },
 
+                openPreviewModal(u) {
+                    this.previewData = { ...u };
+                    this.$dispatch('open-modal', 'modal-preview-signature');
+                },
+
                 openEditModal(data) {
                     this.editData = { ...data };
+                    this.removeSignature = false;
+                    this.signatureModeEdit = 'draw';
+                    this.filePreviewUrlEdit = null;
                     this.$dispatch('open-modal', 'modal-edit-user');
                     document.getElementById('signatureInputEdit').value = '';
                     const canvas = document.getElementById('signatureCanvasEdit');
                     if (canvas) {
                         const ctx = canvas.getContext('2d');
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                },
+
+                handleFileUpload(event, target) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const url = URL.createObjectURL(file);
+                        if (target === 'add') {
+                            this.filePreviewUrlAdd = url;
+                        } else {
+                            this.filePreviewUrlEdit = url;
+                            this.removeSignature = false;
+                        }
+                    }
+                },
+
+                deleteSignatureDirect(u) {
+                    if (confirm(`Hapus tanda tangan milik "${u.name}"?\nTindakan ini tidak dapat dibatalkan.`)) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/koordinator/users/${u.id}`;
+
+                        const csrf = document.createElement('input');
+                        csrf.type = 'hidden';
+                        csrf.name = '_token';
+                        csrf.value = '{{ csrf_token() }}';
+                        form.appendChild(csrf);
+
+                        const method = document.createElement('input');
+                        method.type = 'hidden';
+                        method.name = '_method';
+                        method.value = 'PUT';
+                        form.appendChild(method);
+
+                        const name = document.createElement('input');
+                        name.type = 'hidden';
+                        name.name = 'name';
+                        name.value = u.name;
+                        form.appendChild(name);
+
+                        const email = document.createElement('input');
+                        email.type = 'hidden';
+                        email.name = 'email';
+                        email.value = u.email;
+                        form.appendChild(email);
+
+                        const role = document.createElement('input');
+                        role.type = 'hidden';
+                        role.name = 'role';
+                        role.value = u.role;
+                        form.appendChild(role);
+
+                        const removeSig = document.createElement('input');
+                        removeSig.type = 'hidden';
+                        removeSig.name = 'remove_signature';
+                        removeSig.value = '1';
+                        form.appendChild(removeSig);
+
+                        document.body.appendChild(form);
+                        form.submit();
                     }
                 },
 
@@ -554,7 +808,6 @@
             function resizeCanvas() {
                 const rect = canvas.getBoundingClientRect();
                 if (rect.width > 0 && rect.height > 0) {
-                    // Create temporary canvas to preserve contents
                     const tempCanvas = document.createElement('canvas');
                     tempCanvas.width = canvas.width;
                     tempCanvas.height = canvas.height;
@@ -564,7 +817,7 @@
                     canvas.width = rect.width;
                     canvas.height = rect.height;
 
-                    ctx.strokeStyle = '#1e293b'; // slate-800
+                    ctx.strokeStyle = '#1e293b';
                     ctx.lineWidth = 3;
                     ctx.lineCap = 'round';
                     ctx.lineJoin = 'round';
@@ -573,7 +826,6 @@
                 }
             }
 
-            // Observe the parent container for dimension changes (perfect for modal display transitions)
             const resizeObserver = new ResizeObserver((entries) => {
                 for (let entry of entries) {
                     if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {

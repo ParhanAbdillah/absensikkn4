@@ -27,10 +27,13 @@ class UserController extends Controller
             'nim' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
             'signature' => 'nullable|string',
+            'signature_file' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
         ]);
 
         $signaturePath = null;
-        if ($request->filled('signature')) {
+        if ($request->hasFile('signature_file')) {
+            $signaturePath = $request->file('signature_file')->store('signatures', 'public');
+        } elseif ($request->filled('signature')) {
             $sigData = $request->signature;
             if (preg_match('/^data:image\/(\w+);base64,/', $sigData, $type)) {
                 $sigData = substr($sigData, strpos($sigData, ',') + 1);
@@ -71,6 +74,8 @@ class UserController extends Controller
             'nim' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
             'signature' => 'nullable|string',
+            'signature_file' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
+            'remove_signature' => 'nullable|boolean',
         ]);
 
         $data = [
@@ -83,7 +88,17 @@ class UserController extends Controller
             'phone' => $request->phone,
         ];
 
-        if ($request->filled('signature')) {
+        if ($request->boolean('remove_signature')) {
+            if ($user->signature && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->signature)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->signature);
+            }
+            $data['signature'] = null;
+        } elseif ($request->hasFile('signature_file')) {
+            if ($user->signature && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->signature)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->signature);
+            }
+            $data['signature'] = $request->file('signature_file')->store('signatures', 'public');
+        } elseif ($request->filled('signature')) {
             $sigData = $request->signature;
             if (preg_match('/^data:image\/(\w+);base64,/', $sigData, $type)) {
                 $sigData = substr($sigData, strpos($sigData, ',') + 1);
