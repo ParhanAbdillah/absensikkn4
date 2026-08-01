@@ -55,7 +55,7 @@ class User extends Authenticatable
             return $this->signature;
         }
 
-        return asset('storage/' . ltrim($this->signature, '/'));
+        return '/storage/' . ltrim($this->signature, '/');
     }
 
     /**
