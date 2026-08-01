@@ -59,7 +59,9 @@ class UserController extends Controller
             'is_active' => true,
         ]);
 
-        return redirect()->route('koordinator.users.index')
+        $page = $request->input('page', 1);
+
+        return redirect()->route('koordinator.users.index', ['page' => $page])
             ->with('success', 'Data anggota berhasil ditambahkan.');
     }
 
@@ -124,15 +126,19 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('koordinator.users.index')
+        $page = $request->input('page', 1);
+
+        return redirect()->route('koordinator.users.index', ['page' => $page])
             ->with('success', 'Data anggota berhasil diperbarui.');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        $page = $request->input('page', 1);
+
         // Cegah menghapus diri sendiri
         if (auth()->id() === $user->id) {
-            return redirect()->route('koordinator.users.index')
+            return redirect()->route('koordinator.users.index', ['page' => $page])
                 ->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
@@ -142,7 +148,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('koordinator.users.index')
+        return redirect()->route('koordinator.users.index', ['page' => $page])
             ->with('success', 'Data anggota berhasil dihapus.');
     }
 }

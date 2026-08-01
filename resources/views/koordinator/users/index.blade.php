@@ -265,6 +265,7 @@
         <form id="deleteForm" method="POST" style="display:none;">
             @csrf
             @method('DELETE')
+            <input type="hidden" name="page" id="deleteFormPage" value="1">
         </form>
 
 
@@ -273,6 +274,8 @@
         <x-modal name="modal-tambah-user" :show="false" focusable>
             <form action="{{ route('koordinator.users.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
                 @csrf
+                <input type="hidden" name="page" :value="currentPage">
+
                 <div class="flex items-center gap-3 mb-6">
                     <div class="p-2 bg-emerald-100 rounded-xl text-emerald-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
@@ -394,6 +397,7 @@
             <form :action="'/koordinator/users/' + editData.id" method="POST" enctype="multipart/form-data" class="p-6">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="page" :value="currentPage">
                 <input type="hidden" name="remove_signature" :value="removeSignature ? '1' : '0'">
 
                 <div class="flex items-center gap-3 mb-6">
@@ -614,6 +618,7 @@
     <script>
         function userIndex() {
             const allUsers = @json($users);
+            const initialPage = parseInt(new URLSearchParams(window.location.search).get('page')) || 1;
 
             return {
                 allUsers,
@@ -622,7 +627,7 @@
                 sortCol: 'name',
                 sortDir: 'asc',
                 perPage: 10,
-                currentPage: 1,
+                currentPage: initialPage,
                 editData: { id: '', name: '', email: '', nim: '', phone: '', role: 'anggota', divisi: '', class: '', signature_url: '' },
                 previewData: { id: '', name: '', nim: '', role: '', signature_url: '' },
                 removeSignature: false,
@@ -630,6 +635,14 @@
                 signatureModeEdit: 'draw',
                 filePreviewUrlAdd: null,
                 filePreviewUrlEdit: null,
+
+                init() {
+                    this.$watch('currentPage', val => {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('page', val);
+                        window.history.replaceState({}, '', url.toString());
+                    });
+                },
 
                 get filteredUsers() {
                     let data = this.allUsers.filter(u => {
@@ -743,6 +756,12 @@
                         method.value = 'PUT';
                         form.appendChild(method);
 
+                        const page = document.createElement('input');
+                        page.type = 'hidden';
+                        page.name = 'page';
+                        page.value = this.currentPage;
+                        form.appendChild(page);
+
                         const name = document.createElement('input');
                         name.type = 'hidden';
                         name.name = 'name';
@@ -776,6 +795,7 @@
                     if (confirm(`Hapus anggota "${u.name}"?\nTindakan ini tidak dapat dibatalkan.`)) {
                         const form = document.getElementById('deleteForm');
                         form.action = `/koordinator/users/${u.id}`;
+                        document.getElementById('deleteFormPage').value = this.currentPage;
                         form.submit();
                     }
                 },
